@@ -345,6 +345,46 @@ it('stores the operator logo on the configured media-library disk', function () 
         ->and(Storage::disk('s3')->exists($media->getPathRelativeToRoot()))->toBeTrue();
 });
 
+it('404s a vehicle photo URL when the media disk is the private local disk, not the public one', function () {
+    // Pins the exact production incident: .env.example used to default MEDIA_DISK to
+    // 'local', and Spatie's DefaultUrlGenerator emits the same unsigned /storage/{path}
+    // URL no matter which disk is configured. Laravel's ServeFile only serves that
+    // unsigned request when the disk's own config visibility is 'public'; 'local' has
+    // none, so every vehicle photo 404s storefront-wide with nothing erroring
+    // server-side. Real routed HTTP request, not an object-level assertion — a
+    // config-only check would not have caught this; the four disk-selecting call sites
+    // all "look" correct in code review.
+    config(['media-library.disk_name' => 'local']);
+
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('local');
+
+    $vehicle = Vehicle::factory()->create();
+    $media = $vehicle->addMedia(UploadedFile::fake()->image('front.jpg', 800, 600))
+        ->toMediaCollection('vehicle_photos');
+
+    $this->get($media->getFullUrl())->assertNotFound();
+});
+
+it('stores vehicle photos on the public disk when media-library.disk_name is public', function () {
+    // The two tests above pin the S3 (production) path; this pins the *fixed default*
+    // itself, since neither existing test in this file exercises 'public' explicitly.
+    config(['media-library.disk_name' => 'public']);
+
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('public');
+
+    $vehicle = Vehicle::factory()->create();
+    $media = $vehicle->addMedia(UploadedFile::fake()->image('front.jpg', 800, 600))
+        ->toMediaCollection('vehicle_photos');
+
+    expect($media->disk)->toBe('public')
+        ->and(config()->string('filesystems.disks.public.visibility'))->toBe('public')
+        ->and(Storage::disk('public')->exists($media->getPathRelativeToRoot()))->toBeTrue();
+});
+
 it('keeps vehicle photos from different tenants under separate storage roots', function () {
     [$tenantA] = fleetOperator('a.localhost');
     [$tenantB] = fleetOperator('b.localhost');
