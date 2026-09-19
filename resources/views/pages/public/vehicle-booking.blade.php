@@ -25,6 +25,23 @@ use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Component {
     /**
+     * Booking-submit throttle ceiling — shared between the cheap pre-check and the
+     * authoritative post-increment check in submit(), so the two can't drift.
+     */
+    private const MAX_SUBMIT_ATTEMPTS = 5;
+
+    /**
+     * Tenant-wide companion to MAX_SUBMIT_ATTEMPTS. The per-vehicle cap alone
+     * bounds nothing in aggregate — an attacker who cycles across the fleet gets
+     * 5 fresh attempts per vehicle they target, which is exactly the
+     * pending-booking inventory-denial threat #09 is about (see finding 01: a
+     * Pending booking blocks the calendar until it expires). 20/hour is generous
+     * for a real customer or family booking several different cars, while still
+     * bounding total fleet-wide spam from one IP regardless of fleet size.
+     */
+    private const MAX_TENANT_SUBMIT_ATTEMPTS = 20;
+
+    /**
      * Locked: mount()'s is_public + Available check runs once, and submit() books
      * whatever this property holds. Full rationale on vehicle-show.blade.php's
      * $vehicle.
@@ -175,12 +192,25 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     {
         // Highest-impact public action in the app (real row, vehicle-date lock,
         // operator email) — keyed per vehicle + IP, same pattern as waitlist/
-        // stock-alert. Checked before validate() so invalid attempts are free;
-        // hit() lands after validate() but before the actual booking attempt,
-        // so a genuine customer retrying after a slot conflict still spends budget.
-        $key = 'booking-submit:'.$this->vehicle->id.':'.request()->ip();
+        // stock-alert, plus a tenant-wide + IP companion so cycling across the
+        // fleet can't multiply the per-vehicle budget (see MAX_TENANT_SUBMIT_ATTEMPTS).
+        // Two gates per key, not one: the cheap pre-check below is a fast path
+        // (skips validate() for an already-throttled visitor, keeps invalid
+        // attempts free) but is NOT the security boundary — tooManyAttempts()
+        // (read) and hit() (write) are separate calls, so two concurrent requests
+        // can both read "under the limit" before either writes its increment.
+        // The authoritative gate is the post-increment check further down: hit()
+        // returns the count AFTER its atomic increment (Redis INCRBY, or a
+        // lockForUpdate-wrapped transaction on the database store), so concurrent
+        // callers get distinct, correctly-ordered counts and can't both slip past
+        // it the way they could both slip past the pre-check.
+        $vehicleKey = 'booking-submit:'.$this->vehicle->id.':'.request()->ip();
+        $tenantKey = 'booking-submit-tenant:'.(tenant('id') ?? 'central').':'.request()->ip();
 
-        if (RateLimiter::tooManyAttempts($key, maxAttempts: 5)) {
+        if (
+            RateLimiter::tooManyAttempts($vehicleKey, maxAttempts: self::MAX_SUBMIT_ATTEMPTS)
+            || RateLimiter::tooManyAttempts($tenantKey, maxAttempts: self::MAX_TENANT_SUBMIT_ATTEMPTS)
+        ) {
             $this->submitError = __('booking.submit_throttled');
 
             return;
@@ -196,7 +226,18 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         ], $this->dateMessages());
 
         $this->slotTaken = false;
-        RateLimiter::hit($key, decaySeconds: 3600);
+
+        // Hit both unconditionally (not short-circuited) so a request that trips
+        // the vehicle cap doesn't leave the tenant-wide counter under-recorded,
+        // and vice versa — the || below reads both post-increment counts either way.
+        $vehicleHits = RateLimiter::hit($vehicleKey, decaySeconds: 3600);
+        $tenantHits = RateLimiter::hit($tenantKey, decaySeconds: 3600);
+
+        if ($vehicleHits > self::MAX_SUBMIT_ATTEMPTS || $tenantHits > self::MAX_TENANT_SUBMIT_ATTEMPTS) {
+            $this->submitError = __('booking.submit_throttled');
+
+            return;
+        }
 
         try {
             $booking = resolve(BookingService::class)->create([
