@@ -49,8 +49,8 @@
  * the platform blue below. That is deliberate — they are simply un-overridden.
  */
 @theme static {
-    --color-primary: #2563eb;
-    --color-secondary: #1e40af;
+    --color-primary: #2e4bff;
+    --color-secondary: #1b32d8;
     --color-on-primary: #ffffff;
 
     /* Neutrals. --color-ink-faint is #6b7280 (4.83:1 on white), not #9ca3af

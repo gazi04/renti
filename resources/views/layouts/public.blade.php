@@ -8,9 +8,9 @@
     <title>{{ ($title ?? null) ? $title . ' — ' . (tenant()?->name ?? config('app.name')) : (tenant()?->name ?? config('app.name')) }}</title>
 
     @php
-        $colorPrimary   = tenant()?->colorPrimary()   ?? config('branding.defaults.color_primary',   '#2563eb');
-        $colorSecondary = tenant()?->colorSecondary() ?? config('branding.defaults.color_secondary', '#1e40af');
-        $fontFamily     = tenant()?->setting('font_family',     config('branding.defaults.font_family',     'Inter'));
+        $colorPrimary   = tenant()?->colorPrimary()   ?? config('branding.defaults.color_primary',   '#2e4bff');
+        $colorSecondary = tenant()?->colorSecondary() ?? config('branding.defaults.color_secondary', '#1b32d8');
+        $fontFamily     = tenant()?->setting('font_family',     config('branding.defaults.font_family',     'Poppins'));
         $fontAlias      = config('branding.fonts.' . $fontFamily . '.alias', 'inter');
     @endphp
 
@@ -50,32 +50,31 @@
     <header class="sticky top-0 z-40 border-b border-line bg-surface-raised" x-data="{ open: false }">
         <x-ui.container>
             <div class="flex h-16 items-center justify-between gap-4">
-                <a href="{{ route('public.home') }}" class="flex min-w-0 items-center gap-3 text-ink transition-opacity hover:opacity-80">
-                    @if(tenant()?->logoUrl())
-                        <img src="{{ tenant()->logoUrl() }}" alt="{{ tenant()->name }}" class="h-9 w-auto max-w-[11rem] object-contain sm:max-w-[14rem]">
-                    @else
-                        <span class="truncate text-lg font-semibold">{{ tenant()?->name ?? config('app.name') }}</span>
-                    @endif
-                </a>
+                <x-ui.brand-mark />
 
                 {{-- Desktop nav --}}
                 <nav class="hidden items-center gap-8 text-sm font-medium text-ink-muted md:flex">
-                    <a href="{{ route('public.home') }}" class="transition-colors hover:text-ink">{{ __('booking.nav_home') }}</a>
-                    <a href="{{ route('public.vehicles') }}" class="transition-colors hover:text-ink">{{ __('booking.nav_vehicles') }}</a>
-                    <a href="{{ route('public.home') }}#about" class="transition-colors hover:text-ink">{{ __('booking.nav_about') }}</a>
-                    <a href="#contact" class="transition-colors hover:text-ink">{{ __('booking.nav_contact') }}</a>
+                    <a href="{{ route('public.home') }}" class="text-ink transition-colors hover:text-primary">{{ __('booking.nav_home') }}</a>
+                    <a href="{{ route('public.vehicles') }}" class="transition-colors hover:text-primary">{{ __('booking.nav_vehicles') }}</a>
+                    <a href="{{ route('public.home') }}#about" class="transition-colors hover:text-primary">{{ __('booking.nav_about') }}</a>
+                    <a href="#contact" class="transition-colors hover:text-primary">{{ __('booking.nav_contact') }}</a>
                 </nav>
 
-                <div class="flex shrink-0 items-center gap-1">
-                    {{-- Language toggle --}}
-                    <form method="POST" action="{{ route('public.language') }}">
-                        @csrf
-                        <input type="hidden" name="locale" value="{{ app()->getLocale() === 'sq' ? 'en' : 'sq' }}">
-                        <button type="submit"
-                                class="inline-flex min-h-11 items-center rounded-control px-3 text-sm text-ink-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                            {{ __('booking.language_toggle') }}
-                        </button>
-                    </form>
+                <div class="flex shrink-0 items-center gap-3">
+                    {{-- Language toggle: an explicit EN/SQ pill, not a single "flip"
+                         toggle, so the active locale is always visibly stated. --}}
+                    <div class="hidden items-center gap-0.5 rounded-full bg-surface-sunken p-0.5 text-xs font-semibold sm:flex">
+                        @foreach(['en' => 'EN', 'sq' => 'SQ'] as $locale => $label)
+                            <form method="POST" action="{{ route('public.language') }}">
+                                @csrf
+                                <input type="hidden" name="locale" value="{{ $locale }}">
+                                <button type="submit"
+                                        class="{{ app()->getLocale() === $locale ? 'bg-surface-raised text-ink shadow-sm' : 'text-ink-faint hover:text-ink' }} inline-flex min-h-9 items-center rounded-full px-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                    {{ $label }}
+                                </button>
+                            </form>
+                        @endforeach
+                    </div>
 
                     {{-- Mobile hamburger. 44px hit area: the icon stays 24px, the
                          button around it does the work. --}}
@@ -99,6 +98,19 @@
                 <a href="{{ route('public.vehicles') }}" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink">{{ __('booking.nav_vehicles') }}</a>
                 <a href="{{ route('public.home') }}#about" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink" @click="open = false">{{ __('booking.nav_about') }}</a>
                 <a href="#contact" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink" @click="open = false">{{ __('booking.nav_contact') }}</a>
+
+                <div class="flex items-center gap-0.5 rounded-full bg-surface-sunken p-0.5 text-xs font-semibold">
+                    @foreach(['en' => 'EN', 'sq' => 'SQ'] as $locale => $label)
+                        <form method="POST" action="{{ route('public.language') }}">
+                            @csrf
+                            <input type="hidden" name="locale" value="{{ $locale }}">
+                            <button type="submit"
+                                    class="{{ app()->getLocale() === $locale ? 'bg-surface-raised text-ink shadow-sm' : 'text-ink-faint hover:text-ink' }} inline-flex min-h-9 items-center rounded-full px-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                {{ $label }}
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
             </x-ui.container>
         </nav>
     </header>
@@ -115,57 +127,95 @@
 
     {{-- Footer --}}
     <footer id="contact" class="scroll-mt-20 border-t border-line">
-        <x-ui.container class="py-10">
-            @php
-                $footerText       = tenant()?->localizedSetting('footer_text');
-                $socialFacebook   = tenant()?->socialFacebookUrl();
-                $socialInstagram  = tenant()?->socialInstagramUrl();
-                $contactPhone     = tenant()?->setting('contact_phone');
-                $contactEmail     = tenant()?->setting('contact_email');
-                $contactAddress   = tenant()?->setting('contact_address');
-            @endphp
+        <div class="bg-ink text-ink-inverse">
+            <x-ui.container class="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+                @php
+                    $footerText       = tenant()?->localizedSetting('footer_text');
+                    $socialFacebook   = tenant()?->socialFacebookUrl();
+                    $socialInstagram  = tenant()?->socialInstagramUrl();
+                    $contactPhone     = tenant()?->setting('contact_phone');
+                    $contactEmail     = tenant()?->setting('contact_email');
+                    $contactAddress   = tenant()?->setting('contact_address');
+                @endphp
 
-            <div class="flex flex-col gap-6 text-sm text-ink-muted sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p class="font-medium text-ink">{{ tenant()?->name ?? config('app.name') }}</p>
+                {{-- Brand --}}
+                <div class="lg:col-span-2">
+                    <x-ui.brand-mark onDark />
                     @if($footerText)
-                        <p class="mt-1 max-w-xs">{{ $footerText }}</p>
+                        <p class="mt-4 max-w-xs text-sm text-ink-inverse/70">{{ $footerText }}</p>
                     @endif
-                    @if($contactAddress)
-                        <p class="mt-1">{{ $contactAddress }}</p>
-                    @endif
-                    @if($contactPhone)
-                        <p class="mt-1">
-                            <a href="tel:{{ $contactPhone }}" class="inline-flex min-h-11 items-center hover:text-ink">{{ $contactPhone }}</a>
-                        </p>
-                    @endif
-                    @if($contactEmail)
-                        <p>
-                            <a href="mailto:{{ $contactEmail }}" class="inline-flex min-h-11 items-center hover:text-ink">{{ $contactEmail }}</a>
-                        </p>
+
+                    @if($socialFacebook || $socialInstagram)
+                        <div class="mt-5 flex items-center gap-3">
+                            @if($socialFacebook)
+                                <a href="{{ $socialFacebook }}" target="_blank" rel="noopener noreferrer"
+                                   class="inline-flex size-9 items-center justify-center rounded-full bg-ink-inverse/10 text-ink-inverse/80 transition-colors hover:bg-ink-inverse/20 hover:text-ink-inverse"
+                                   aria-label="Facebook">
+                                    <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
+                                        <path d="M13.5 21v-7.5h2.5l.4-3H13.5V8.5c0-.87.24-1.46 1.49-1.46H16.5V4.35c-.27-.04-1.18-.11-2.24-.11-2.22 0-3.74 1.35-3.74 3.84V10.5H8v3h2.52V21h2.98Z" />
+                                    </svg>
+                                </a>
+                            @endif
+                            @if($socialInstagram)
+                                <a href="{{ $socialInstagram }}" target="_blank" rel="noopener noreferrer"
+                                   class="inline-flex size-9 items-center justify-center rounded-full bg-ink-inverse/10 text-ink-inverse/80 transition-colors hover:bg-ink-inverse/20 hover:text-ink-inverse"
+                                   aria-label="Instagram">
+                                    <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                        <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+                                        <circle cx="12" cy="12" r="3.8" />
+                                        <circle cx="17" cy="7" r="0.9" fill="currentColor" stroke="none" />
+                                    </svg>
+                                </a>
+                            @endif
+                        </div>
                     @endif
                 </div>
 
-                @if($socialFacebook || $socialInstagram)
-                <div class="flex items-center gap-2">
-                    @if($socialFacebook)
-                        <a href="{{ $socialFacebook }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center rounded-control px-2 hover:text-ink" aria-label="Facebook">
-                            Facebook
-                        </a>
-                    @endif
-                    @if($socialInstagram)
-                        <a href="{{ $socialInstagram }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center rounded-control px-2 hover:text-ink" aria-label="Instagram">
-                            Instagram
-                        </a>
-                    @endif
+                {{-- Company links --}}
+                <div>
+                    <p class="text-xs font-semibold tracking-wide text-ink-inverse/50 uppercase">{{ __('booking.footer_company_heading') }}</p>
+                    <nav class="mt-4 flex flex-col gap-2 text-sm text-ink-inverse/70">
+                        <a href="{{ route('public.home') }}" class="min-h-8 hover:text-ink-inverse">{{ __('booking.nav_home') }}</a>
+                        <a href="{{ route('public.vehicles') }}" class="min-h-8 hover:text-ink-inverse">{{ __('booking.nav_vehicles') }}</a>
+                        <a href="{{ route('public.home') }}#about" class="min-h-8 hover:text-ink-inverse">{{ __('booking.nav_about') }}</a>
+                        <a href="#contact" class="min-h-8 hover:text-ink-inverse">{{ __('booking.nav_contact') }}</a>
+                    </nav>
                 </div>
+
+                {{-- Contact --}}
+                @if($contactAddress || $contactPhone || $contactEmail)
+                    <div>
+                        <p class="text-xs font-semibold tracking-wide text-ink-inverse/50 uppercase">{{ __('booking.footer_contact_heading') }}</p>
+                        <div class="mt-4 flex flex-col gap-3 text-sm text-ink-inverse/70">
+                            @if($contactAddress)
+                                <span class="flex items-start gap-2">
+                                    <flux:icon.map-pin class="mt-0.5 size-4 shrink-0" />
+                                    {{ $contactAddress }}
+                                </span>
+                            @endif
+                            @if($contactPhone)
+                                <a href="tel:{{ $contactPhone }}" class="flex min-h-8 items-center gap-2 hover:text-ink-inverse">
+                                    <flux:icon.phone class="size-4 shrink-0" />
+                                    {{ $contactPhone }}
+                                </a>
+                            @endif
+                            @if($contactEmail)
+                                <a href="mailto:{{ $contactEmail }}" class="flex min-h-8 items-center gap-2 hover:text-ink-inverse">
+                                    <flux:icon.envelope class="size-4 shrink-0" />
+                                    {{ $contactEmail }}
+                                </a>
+                            @endif
+                        </div>
+                    </div>
                 @endif
-            </div>
+            </x-ui.container>
 
-            <div class="mt-6 border-t border-line pt-4 text-center text-xs text-ink-faint">
-                &copy; {{ date('Y') }} {{ tenant()?->name ?? config('app.name') }}. Powered by Renti.
+            <div class="border-t border-ink-inverse/10">
+                <x-ui.container class="py-4 text-center text-xs text-ink-inverse/50">
+                    &copy; {{ date('Y') }} {{ tenant()?->name ?? config('app.name') }}. Powered by Renti.
+                </x-ui.container>
             </div>
-        </x-ui.container>
+        </div>
     </footer>
 
     <livewire:faq-concierge />

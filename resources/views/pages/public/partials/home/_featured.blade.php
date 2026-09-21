@@ -11,10 +11,12 @@
             </x-slot:action>
         </x-ui.section-heading>
 
+        {{-- 3 columns: featuredVehicles() caps at 6, so this always fills in
+             full rows (2x3) instead of leaving a half-empty trailing row. --}}
         <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($vehicles as $vehicle)
                 <div wire:key="featured-{{ $vehicle->id }}">
-                    @include('pages.public.partials.vehicles._card', ['vehicle' => $vehicle])
+                    @include('pages.public.partials.home._vehicle-card', ['vehicle' => $vehicle])
                 </div>
             @endforeach
         </div>

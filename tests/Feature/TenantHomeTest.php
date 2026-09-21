@@ -1,6 +1,8 @@
 <?php
 
 use App\Enums\VehicleStatus;
+use App\Models\Booking;
+use App\Models\Review;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 
@@ -194,6 +196,18 @@ it('renders the home page shell with its hero, services and fleet', function () 
         ->assertSee('Layout Car');
 });
 
+it('renders the trust strip and closing CTA banner', function () {
+    homeTenant('hometrust');
+
+    $this->get(tenant_url('hometrust', '/'))
+        ->assertOk()
+        ->assertSee(__('booking.home_trust_free_cancellation'))
+        ->assertSee(__('booking.home_trust_instant_confirmation'))
+        ->assertSee(__('booking.home_trust_comprehensive_insurance'))
+        ->assertSee(__('booking.home_trust_24_7_support'))
+        ->assertSee(__('booking.home_cta_heading'));
+});
+
 it('ignores a stale layout setting left over from the old variant system', function () {
     $tenant = homeTenant('homestalelay');
 
@@ -229,4 +243,50 @@ it('renders featured vehicles with their cover photos on the home page', functio
         ->assertSee('Featured Golf')
         ->assertSee('Featured Passat')
         ->assertSee("/storage/tenants/{$tenant->id}/vehicle_photos/", escape: false);
+});
+
+// ── About stat grid ───────────────────────────────────────────────────────────
+
+it('shows the real fleet size on the about section', function () {
+    $tenant = homeTenant('homestats');
+
+    tenancy()->initialize($tenant);
+    homeVehicle();
+    homeVehicle();
+    homeVehicle();
+    // Private/maintenance vehicles must not inflate the public count.
+    Vehicle::factory()->private()->create();
+    Vehicle::factory()->underMaintenance()->create();
+    tenancy()->end();
+
+    $this->get(tenant_url('homestats', '/'))
+        ->assertOk()
+        ->assertSeeInOrder(['3', __('booking.home_stat_fleet_size')]);
+});
+
+it('hides the average-rating stat when there are no approved reviews yet', function () {
+    $tenant = homeTenant('homestatsnorev');
+
+    tenancy()->initialize($tenant);
+    homeVehicle();
+    tenancy()->end();
+
+    $this->get(tenant_url('homestatsnorev', '/'))
+        ->assertOk()
+        ->assertSee(__('booking.home_stat_fleet_size'))
+        ->assertDontSee(__('booking.home_stat_average_rating'));
+});
+
+it('shows the average-rating stat once an approved review exists', function () {
+    $tenant = homeTenant('homestatsrev');
+
+    tenancy()->initialize($tenant);
+    $vehicle = homeVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->completed()->create();
+    Review::factory()->approved()->create(['booking_id' => $booking->id, 'vehicle_id' => $vehicle->id, 'rating' => 5]);
+    tenancy()->end();
+
+    $this->get(tenant_url('homestatsrev', '/'))
+        ->assertOk()
+        ->assertSee(__('booking.home_stat_average_rating'));
 });

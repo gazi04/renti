@@ -883,14 +883,14 @@ it('toggling language changes rendered strings', function () {
     publicVehicle();
     tenancy()->end();
 
-    // Default locale is sq — header should show 'English'.
+    // Default locale is sq.
     $this->get(tenant_url('ardi', '/vehicles'))
-        ->assertSee('English');
+        ->assertSee('lang="sq"', escape: false);
 
     // Toggle to en.
     $this->post(tenant_url('ardi', '/language'), ['locale' => 'en'])
         ->assertRedirect();
 
     $this->get(tenant_url('ardi', '/vehicles'))
-        ->assertSee('Shqip');
+        ->assertSee('lang="en"', escape: false);
 });
