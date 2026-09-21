@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\BookingService;
 use App\Services\Media\MediaFileResolver;
 use App\Services\RentalAgreementService;
 use Filament\Facades\Filament;
@@ -180,6 +181,35 @@ it('regenerates and updates generated_at when force=true', function () {
     $second = $service->generate($booking, force: true);
 
     expect($second->id)->toBe($first->id)
+        ->and($second->generated_at->toDateTimeString())->not->toBe($originalTime)
+        ->and(Contract::count())->toBe(1);
+});
+
+it('force-regenerates an existing agreement PDF when the booking is moved', function () {
+    // BookingService::move() (deep-audit finding 08) must not leave a stale
+    // agreement cached: the PDF is idempotent by file existence, not content,
+    // so an unforced generate() after a move would silently keep serving the
+    // pre-move dates.
+    Storage::fake();
+
+    [, , $booking] = agreementSetup();
+    $agreementService = app(RentalAgreementService::class);
+
+    $first = $agreementService->generate($booking);
+    $originalTime = $first->generated_at->toDateTimeString();
+
+    $this->travel(2)->seconds();
+
+    app(BookingService::class)->move($booking, [
+        'vehicle_id' => $booking->vehicle_id,
+        'start_date' => $booking->start_date->addDays(10)->toDateTimeString(),
+        'end_date' => $booking->end_date->addDays(10)->toDateTimeString(),
+    ]);
+
+    $second = $booking->fresh()->contract;
+
+    expect($second)->not->toBeNull()
+        ->and($second->id)->toBe($first->id)
         ->and($second->generated_at->toDateTimeString())->not->toBe($originalTime)
         ->and(Contract::count())->toBe(1);
 });

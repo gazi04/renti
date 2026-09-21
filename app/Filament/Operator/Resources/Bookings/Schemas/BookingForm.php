@@ -6,7 +6,9 @@ use App\Enums\BookingStatus;
 use App\Enums\PlanFeature;
 use App\Models\Booking;
 use App\Models\Tenant;
+use App\Models\Vehicle;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -27,6 +29,32 @@ class BookingForm
                 Section::make(__('panel.section_vehicle_dates'))
                     ->columns(2)
                     ->components([
+                        // Last-move snapshot (BookingService::move(), deep-audit
+                        // finding 08) — only the most recent prior state, not a
+                        // full history. Read-only, shown only after a move.
+                        Placeholder::make('moved_from')
+                            ->label(__('panel.moved_from_label'))
+                            ->columnSpanFull()
+                            ->visible(fn (?Booking $record): bool => $record?->moved_at !== null)
+                            ->content(function (?Booking $record): string {
+                                if ($record === null) {
+                                    return '';
+                                }
+
+                                // Vehicle::find() (not the previousVehicle() magic
+                                // relation property) so the nullability here is a
+                                // real, unambiguous Vehicle|null from Eloquent's own
+                                // typed base method.
+                                $vehicleName = $record->previous_vehicle_id === null
+                                    ? null
+                                    : Vehicle::query()->withTrashed()->find($record->previous_vehicle_id)?->name;
+
+                                return __('panel.moved_from_value', [
+                                    'vehicle' => $vehicleName ?? '—',
+                                    'start' => $record->previous_start_date?->format('d M Y') ?? '—',
+                                    'end' => $record->previous_end_date?->format('d M Y') ?? '—',
+                                ]);
+                            }),
                         Select::make('vehicle_id')
                             ->label(__('panel.vehicle'))
                             ->relationship('vehicle', 'name')

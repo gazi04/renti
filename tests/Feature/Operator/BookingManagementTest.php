@@ -199,6 +199,75 @@ it('cancel action is not visible for Completed bookings', function () {
         ->assertTableActionHidden('cancel', $booking);
 });
 
+// ─── Move (deep-audit finding 08) ──────────────────────────────────────────────
+
+it('move action is visible for Pending and Confirmed bookings', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $pending = Booking::factory()->forVehicle($vehicle)->create();
+    $confirmed = Booking::factory()->forVehicle($vehicle)->confirmed()->create();
+
+    Livewire::test(ListBookings::class)
+        ->assertTableActionVisible('move', $pending)
+        ->assertTableActionVisible('move', $confirmed);
+});
+
+it('move action is hidden for Active, Completed and Cancelled bookings', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $active = Booking::factory()->forVehicle($vehicle)->active()->create();
+    $completed = Booking::factory()->forVehicle($vehicle)->completed()->create();
+    $cancelled = Booking::factory()->forVehicle($vehicle)->cancelled()->create();
+
+    Livewire::test(ListBookings::class)
+        ->assertTableActionHidden('move', $active)
+        ->assertTableActionHidden('move', $completed)
+        ->assertTableActionHidden('move', $cancelled);
+});
+
+it('move action updates the booking to the new vehicle and dates', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-04',
+    ]);
+    $otherVehicle = Vehicle::factory()->create(['daily_rate' => 60, 'weekly_rate' => null, 'monthly_rate' => null]);
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('move', $booking, data: [
+            'vehicle_id' => $otherVehicle->id,
+            'start_date' => '2030-08-01',
+            'end_date' => '2030-08-04',
+        ])
+        ->assertHasNoTableActionErrors();
+
+    expect($booking->fresh()->vehicle_id)->toBe($otherVehicle->id)
+        ->and($booking->fresh()->start_date->toDateString())->toBe('2030-08-01')
+        ->and($booking->fresh()->previous_vehicle_id)->toBe($vehicle->id)
+        ->and($booking->fresh()->moved_at)->not->toBeNull();
+});
+
+it('move action onto a taken slot shows a notification and leaves the booking untouched', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-04',
+    ]);
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-09-01',
+        'end_date' => '2030-09-05',
+    ]);
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('move', $booking, data: [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => '2030-09-02',
+            'end_date' => '2030-09-04',
+        ])
+        ->assertNotified();
+
+    expect($booking->fresh()->start_date->toDateString())->toBe('2030-07-01')
+        ->and($booking->fresh()->moved_at)->toBeNull();
+});
+
 // ─── Manual booking ───────────────────────────────────────────────────────────
 
 it('manual booking via create page lands Confirmed with computed totals', function () {

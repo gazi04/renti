@@ -58,6 +58,18 @@ return [
     ],
 
     // Rezervimi anuluar (klienti ose operatori)
+    'booking_moved' => [
+        'subject' => 'Rezervimi u Përditësua — :reference',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Datat e rezervimit tuaj kanë ndryshuar.',
+        'reference_label' => 'Referenca',
+        'previous_label' => 'Më parë',
+        'new_label' => 'Tani',
+        'vehicle_label' => 'Automjeti',
+        'dates_label' => 'Datat',
+        'outro' => 'Nëse keni pyetje, ju lutemi kontaktoni :operator.',
+    ],
+
     'booking_cancelled' => [
         'subject' => 'Rezervimi Anuluar — :reference',
         'bell_title' => 'Rezervimi Anuluar nga Klienti',

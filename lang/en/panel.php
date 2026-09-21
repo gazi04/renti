@@ -37,11 +37,15 @@ return [
     'action_mark_active' => 'Mark active',
     'action_complete' => 'Complete',
     'action_cancel' => 'Cancel',
+    'action_move' => 'Move',
     'action_agreement' => 'Download agreement',
     'pickup_time' => 'Pickup time',
     'start_odometer' => 'Odometer at pickup (km)',
     'return_time' => 'Return time',
     'end_odometer' => 'Odometer at return (km)',
+    'booking_moved_bell_title' => 'Booking moved',
+    'moved_from_label' => 'Moved from',
+    'moved_from_value' => ':vehicle, :start – :end',
 
     // Vehicle form
     'section_basics' => 'Basics',

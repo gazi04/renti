@@ -3,13 +3,16 @@
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
+use App\Events\BookingMoved;
 use App\Events\BookingRejected;
 use App\Listeners\SendBookingCancelledNotifications;
 use App\Listeners\SendBookingConfirmedEmail;
+use App\Listeners\SendBookingMovedNotifications;
 use App\Listeners\SendBookingReceivedNotifications;
 use App\Listeners\SendBookingRejectedEmail;
 use App\Mail\BookingCancelledMail;
 use App\Mail\BookingConfirmedMail;
+use App\Mail\BookingMovedMail;
 use App\Mail\BookingReceivedMail;
 use App\Mail\BookingRejectedMail;
 use App\Mail\BookingReviewRequestMail;
@@ -238,6 +241,49 @@ test('cancel dispatches BookingCancelled event with cancelledBy actor via servic
     $this->service->cancel($booking, cancelledBy: 'customer');
 
     Event::assertDispatched(BookingCancelled::class, fn ($e) => $e->cancelledBy === 'customer');
+});
+
+// ── Move (deep-audit finding 08) ────────────────────────────────────────────────
+
+test('move emails the customer and sends the operator a bell notification', function () {
+    Mail::fake();
+
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'customer_email' => 'ana@example.com',
+        'locale' => 'en',
+    ]);
+
+    $notificationsBefore = $this->operator->notifications()->count();
+
+    $listener = new SendBookingMovedNotifications;
+    $listener->handle(new BookingMoved($booking));
+
+    Mail::assertQueued(BookingMovedMail::class, fn ($m) => $m->hasTo($booking->customer_email));
+    // Operator made the change themselves — bell only, no self-email (same
+    // reasoning as an operator-initiated cancel).
+    Mail::assertNotQueued(BookingMovedMail::class, fn ($m) => $m->hasTo($this->operator->email));
+    expect($this->operator->notifications()->count())->toBe($notificationsBefore + 1);
+});
+
+test('move sends no mail when the booking has no customer email', function () {
+    Mail::fake();
+
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'customer_email' => null,
+    ]);
+
+    $listener = new SendBookingMovedNotifications;
+    $listener->handle(new BookingMoved($booking));
+
+    Mail::assertNothingQueued();
+    expect($this->operator->notifications()->count())->toBe(1);
+});
+
+test('move mailable and listener are queued', function () {
+    expect(BookingMovedMail::class)->toImplement(ShouldQueue::class)
+        ->and(SendBookingMovedNotifications::class)->toImplement(ShouldQueue::class);
 });
 
 // ── Operator locale (BUG-L10) ────────────────────────────────────────────────
