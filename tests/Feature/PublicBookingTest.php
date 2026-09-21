@@ -571,6 +571,83 @@ it('throttles repeated booking submissions from the same visitor', function () {
     expect(Booking::count())->toBe(5);
 });
 
+it('does not charge the submission throttle for validation failures', function () {
+    // Regression guard for the submit() reorder that closed the check-then-hit
+    // race (deep-audit finding 09): hit() now runs later, right before the
+    // create() attempt, so a bad submission still must not consume budget —
+    // 5 invalid attempts followed by a 6th, valid one must all succeed in
+    // reaching validation, and the valid one must not be throttled.
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    RateLimiter::clear('booking-submit:'.$vehicle->id.':127.0.0.1');
+
+    foreach (range(0, 4) as $i) {
+        Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+            ->set('startDate', now()->addDays(10 + $i * 3)->toDateString())
+            ->set('endDate', now()->addDays(12 + $i * 3)->toDateString())
+            ->set('customerName', '')
+            ->set('customerPhone', '+38344000000')
+            ->set('customerEmail', 'invalid@example.com')
+            ->set('step', 3)
+            ->call('submit')
+            ->assertHasErrors(['customerName' => 'required']);
+    }
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->set('startDate', now()->addDays(40)->toDateString())
+        ->set('endDate', now()->addDays(42)->toDateString())
+        ->set('customerName', 'Test Renter')
+        ->set('customerPhone', '+38344000000')
+        ->set('customerEmail', 'valid@example.com')
+        ->set('step', 3)
+        ->call('submit')
+        ->assertSet('submitError', null);
+
+    expect(Booking::count())->toBe(1);
+});
+
+it('throttles submissions fleet-wide once a visitor spreads attempts across many vehicles', function () {
+    // Round-2 hardening: the per-vehicle cap alone bounds nothing in aggregate —
+    // cycling across the fleet gets a fresh 5-attempt budget per vehicle. This
+    // proves the tenant-wide + IP companion cap catches that, even though each
+    // individual vehicle here is only ever booked once (nowhere near its own
+    // per-vehicle limit of 5).
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    RateLimiter::clear('booking-submit-tenant:'.$tenant->id.':127.0.0.1');
+
+    foreach (range(0, 19) as $i) {
+        $vehicle = publicVehicle();
+
+        Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+            ->set('startDate', now()->addDays(10 + $i * 3)->toDateString())
+            ->set('endDate', now()->addDays(12 + $i * 3)->toDateString())
+            ->set('customerName', 'Test Renter')
+            ->set('customerPhone', '+38344000000')
+            ->set('customerEmail', "fleet{$i}@example.com")
+            ->set('step', 3)
+            ->call('submit')
+            ->assertSet('submitError', null);
+    }
+
+    // A 21st, still-fresh vehicle — its own per-vehicle counter is at 0, so only
+    // the tenant-wide cap can be the reason this is rejected.
+    $freshVehicle = publicVehicle();
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $freshVehicle])
+        ->set('startDate', now()->addDays(90)->toDateString())
+        ->set('endDate', now()->addDays(92)->toDateString())
+        ->set('customerName', 'Test Renter')
+        ->set('customerPhone', '+38344000000')
+        ->set('customerEmail', 'fleet20@example.com')
+        ->set('step', 3)
+        ->call('submit')
+        ->assertSet('submitError', __('booking.submit_throttled'));
+
+    expect(Booking::count())->toBe(20);
+});
+
 // ── Confirmation page ────────────────────────────────────────────────────────
 
 it('confirmation page shows reference and pending notice', function () {

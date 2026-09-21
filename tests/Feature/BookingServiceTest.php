@@ -5,6 +5,7 @@ use App\Enums\VehicleStatus;
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
+use App\Events\BookingMoved;
 use App\Events\BookingRejected;
 use App\Exceptions\InvalidBookingWindowException;
 use App\Exceptions\VehicleNotAvailableException;
@@ -329,6 +330,106 @@ it('throws when cancelling a completed booking', function () {
 
     $this->service->cancel($booking->fresh());
 })->throws(InvalidArgumentException::class);
+
+it('moves a pending booking to new dates on the same vehicle, keeping the reference and re-pricing', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $reference = $booking->reference;
+
+    $moved = $this->service->move($booking, [
+        'vehicle_id' => $this->vehicle->id,
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-05',
+    ]);
+
+    expect($moved->reference)->toBe($reference)
+        ->and($moved->start_date->toDateString())->toBe('2030-07-01')
+        ->and($moved->end_date->toDateString())->toBe('2030-07-05')
+        ->and((float) $moved->total)->toBe(200.0) // 4 days * 50
+        ->and($moved->previous_vehicle_id)->toBe($this->vehicle->id)
+        ->and($moved->previous_start_date->toDateString())->toBe('2030-06-01')
+        ->and($moved->previous_end_date->toDateString())->toBe('2030-06-04')
+        ->and($moved->moved_at)->not->toBeNull();
+});
+
+it('moves a booking to a different vehicle', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $otherVehicle = Vehicle::factory()->create(['daily_rate' => 80, 'weekly_rate' => null, 'monthly_rate' => null]);
+
+    $moved = $this->service->move($booking, [
+        'vehicle_id' => $otherVehicle->id,
+        'start_date' => '2030-06-01',
+        'end_date' => '2030-06-04',
+    ]);
+
+    expect($moved->vehicle_id)->toBe($otherVehicle->id)
+        ->and($moved->previous_vehicle_id)->toBe($this->vehicle->id)
+        ->and((float) $moved->total)->toBe(240.0); // 3 days * 80
+});
+
+it('throws VehicleNotAvailableException when the new window is already taken', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    Booking::factory()->forVehicle($this->vehicle)->confirmed()->create([
+        'start_date' => '2030-08-01',
+        'end_date' => '2030-08-05',
+    ]);
+
+    $this->service->move($booking, [
+        'vehicle_id' => $this->vehicle->id,
+        'start_date' => '2030-08-02',
+        'end_date' => '2030-08-04',
+    ]);
+})->throws(VehicleNotAvailableException::class);
+
+it('does not false-reject a move that overlaps the booking\'s own current window', function () {
+    // Proves the excludeBookingId fix: without it, the booking's own current row
+    // would always be found as a conflict against itself.
+    $booking = $this->service->create(bookingData($this->vehicle));
+
+    $moved = $this->service->move($booking, [
+        'vehicle_id' => $this->vehicle->id,
+        'start_date' => '2030-06-02', // overlaps the booking's own 06-01..06-04 window
+        'end_date' => '2030-06-06',
+    ]);
+
+    expect($moved->start_date->toDateString())->toBe('2030-06-02');
+});
+
+it('throws when moving a completed booking', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->confirm($booking);
+    $this->service->markActive($booking);
+    $this->service->complete($booking);
+
+    $this->service->move($booking->fresh(), [
+        'vehicle_id' => $this->vehicle->id,
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-05',
+    ]);
+})->throws(InvalidArgumentException::class);
+
+it('throws when moving a cancelled booking', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->cancel($booking);
+
+    $this->service->move($booking->fresh(), [
+        'vehicle_id' => $this->vehicle->id,
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-05',
+    ]);
+})->throws(InvalidArgumentException::class);
+
+it('fires BookingMoved event on move', function () {
+    Event::fake([BookingMoved::class]);
+
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->move($booking, [
+        'vehicle_id' => $this->vehicle->id,
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-05',
+    ]);
+
+    Event::assertDispatched(BookingMoved::class);
+});
 
 it('cancelling an already-cancelled booking is a no-op and does not redispatch BookingCancelled', function () {
     Event::fake([BookingCancelled::class]);

@@ -61,6 +61,17 @@ use Symfony\Component\HttpFoundation\Response;
  * panel took the full policy on 2026-09-12, once the above disproved the premise
  * it had been exempted on. It stays as the lever for a future surface that
  * genuinely cannot take a CSP.
+ *
+ * # Vite's dev server and 'composer dev'
+ *
+ * `npm run dev` (part of `composer dev`) serves CSS/JS/fonts from its own
+ * origin — localhost:5173, bound on both 127.0.0.1 and ::1 — instead of this
+ * app's. Until 2026-09-21 the policy had no exception for it, so running the
+ * dev server silently blocked every asset on all three surfaces (they all
+ * inherit this same policy): storage/logs/laravel.log carried real
+ * `blocked_uri: http://[::1]:5173/...` reports from exactly that. See
+ * viteDevServerOrigins() for the fix and why it cannot leak into `testing` or
+ * production.
  */
 class SecurityHeaders
 {
@@ -98,13 +109,17 @@ class SecurityHeaders
 
     private function policy(): string
     {
+        $vite = $this->viteDevServerOrigins();
+        // HMR's live-reload connection is a websocket to the same origins.
+        $viteSockets = array_map(static fn (string $origin): string => 'ws'.substr($origin, 4), $vite);
+
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-eval'",
-            "style-src 'self' 'unsafe-inline'",
+            "script-src 'self' 'unsafe-eval'".$this->originSuffix($vite),
+            "style-src 'self' 'unsafe-inline'".$this->originSuffix($vite),
             'img-src '.implode(' ', $this->imageSources()),
-            "font-src 'self'",
-            "connect-src 'self'",
+            "font-src 'self'".$this->originSuffix($vite),
+            "connect-src 'self'".$this->originSuffix([...$vite, ...$viteSockets]),
             "form-action 'self'",
             "base-uri 'self'",
             "object-src 'none'",
@@ -123,6 +138,48 @@ class SecurityHeaders
         }
 
         return implode('; ', $directives);
+    }
+
+    /**
+     * Vite's dev-server origins, or [] when they must not be trusted.
+     *
+     * Gated on BOTH app()->environment('local') and public/hot existing (the
+     * marker Vite's dev server writes while it is actually running):
+     * - The environment check keeps this out of `testing`, where
+     *   tests/Feature/Security/*.php pin script-src to exactly
+     *   "'self' 'unsafe-eval'" — widening it there would silently pass a CSP
+     *   regression the mutation-tested cspDirective() helper exists to catch.
+     *   It also keeps it out of production, where relaxing this policy is the
+     *   admin-takeover exposure the class docblock describes.
+     * - The public/hot check keeps `php artisan serve` + built assets (no
+     *   dev server running) on the unwidened policy even in local — there is
+     *   nothing at these origins to trust in that mode.
+     *
+     * vite.config.js pins server.host to the IPv4 loopback explicitly — the
+     * un-pinned 'localhost' default resolves to ::1 only on this stack (no
+     * dual-stack bind), and a bracketed-IPv6 origin is not a fixable problem
+     * here: Chromium's CSP parser rejects "http://[::1]:5173" as a source-list
+     * entry outright ("invalid source ... It will be ignored" in the console),
+     * so no allow-list entry for it can ever take effect. 127.0.0.1 sidesteps
+     * that entirely, and is the one origin public/hot can now ever contain.
+     *
+     * @return list<string>
+     */
+    private function viteDevServerOrigins(): array
+    {
+        if (! app()->environment('local') || ! file_exists(public_path('hot'))) {
+            return [];
+        }
+
+        return ['http://127.0.0.1:5173'];
+    }
+
+    /**
+     * @param  list<string>  $origins
+     */
+    private function originSuffix(array $origins): string
+    {
+        return $origins === [] ? '' : ' '.implode(' ', $origins);
     }
 
     /**

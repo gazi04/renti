@@ -18,20 +18,17 @@ return [
     'hero_note' => 'No credit card required. Admin approval, then you\'re live.',
 
     // Features
-    'features_heading' => 'Everything your rental business needs',
-    'features_subheading' => 'One subscription, one dashboard, your own subdomain.',
+    'features_heading' => 'Everything your rental business needs online',
+    'features_subheading' => 'No developers, no per-transaction cut, no surprises.',
 
-    'feature_storefront_title' => 'Your branded booking site',
-    'feature_storefront_body' => 'Customers book your cars on your own subdomain — your logo, colors, and fonts, no account required. Bilingual out of the box (Albanian & English).',
+    'feature_brand_title' => 'Your brand, your website',
+    'feature_brand_body' => 'Upload your logo, pick two colors and a font. Your customers never see ours — the site is 100% yours.',
 
-    'feature_fleet_title' => 'Fleet & booking management',
-    'feature_fleet_body' => 'Manage vehicles, photos, pricing, and an availability calendar. Confirm, reject, or complete bookings with double-booking protection built in.',
+    'feature_bookings_title' => 'Bookings & contracts, automated',
+    'feature_bookings_body' => 'Every booking comes with an instant confirmation and a ready-to-sign contract — no back-and-forth for you or your customer.',
 
-    'feature_automation_title' => 'Automated emails & agreements',
-    'feature_automation_body' => 'Booking confirmations, cancellations, and rental-agreement PDFs are generated and emailed automatically — in your customer\'s language.',
-
-    'feature_dashboard_title' => 'One dashboard, zero setup hassle',
-    'feature_dashboard_body' => 'Sign up, get approved, and manage your entire rental business from a single operator dashboard — no hosting, no maintenance.',
+    'feature_money_title' => 'We never touch your money',
+    'feature_money_body' => 'Customers pay you directly. Renti charges one flat monthly fee — 0% commission on every rental, always.',
 
     // Pricing
     'pricing_heading' => 'Simple, transparent pricing',
@@ -77,20 +74,24 @@ return [
     'cta_subheading' => 'Register your business, get approved, and start taking bookings.',
     'cta_button' => 'Start your free trial',
 
-    // How it works
-    'nav_how_it_works' => 'How it works',
-    'how_heading' => 'Live in three simple steps',
-    'how_subheading' => 'From registration to your first booking — no technical skills needed.',
-    'how_step_1_title' => 'Register your business',
-    'how_step_1_body' => 'Pick your subdomain, add your business details, and submit your registration in minutes.',
-    'how_step_2_title' => 'Brand your site & add your fleet',
-    'how_step_2_body' => 'Upload your logo, choose your colors and layout, and add vehicles with photos and pricing.',
-    'how_step_3_title' => 'Start taking bookings',
-    'how_step_3_body' => 'Share your link — customers book online, you confirm from your dashboard, emails go out automatically.',
-
     // Hero extras
     'hero_badge' => 'Built for car-rental businesses in the Balkans',
     'hero_mock_url' => 'yourbusiness.renti.lol',
+    'hero_setup_title' => 'Set up your site',
+    'hero_setup_step_1' => 'Upload your logo',
+    'hero_setup_step_2' => 'Pick your colors',
+    'hero_setup_step_3' => 'Go live on your subdomain',
+
+    // About
+    'about_eyebrow' => 'About Renti',
+    'about_heading' => 'Built for how rental businesses actually run.',
+    'about_body' => 'We started Renti because every rental business we talked to was taking bookings over WhatsApp and phone calls. Now any operator can launch a branded site — their logo, their colors, their subdomain — in the time it takes to fill out a form. We never touch a cent of what your customers pay you.',
+    'about_panel_line' => 'Your brand. Your subdomain.',
+
+    // Product demo
+    'demo_heading' => 'See your storefront',
+    'demo_subheading' => 'The same page structure, your fleet, your brand. Here\'s what your customers will see.',
+    'demo_caption' => 'Homepage · Vehicle listing · Vehicle detail · 3-step booking · Confirmation — all in your brand, on every page.',
 
     // Stats strip
     'stat_setup_value' => 'Minutes',

@@ -97,6 +97,12 @@ parameters:
 			path: app/Filament/Operator/Pages/TemplateSettings.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:withTrashed\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Filament/Operator/Resources/Bookings/Schemas/BookingForm.php
+
+		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
 			count: 2
@@ -664,6 +670,12 @@ parameters:
 			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'
 			identifier: property.nonObject
 			count: 1
+			path: app/Listeners/SendBookingMovedNotifications.php
+
+		-
+			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'
+			identifier: property.nonObject
+			count: 1
 			path: app/Listeners/SendBookingReceivedNotifications.php
 
 		-
@@ -699,7 +711,7 @@ parameters:
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:withTrashed\(\)\.$#'
 			identifier: staticMethod.dynamicCall
-			count: 1
+			count: 2
 			path: app/Models/Booking.php
 
 		-
@@ -985,6 +997,12 @@ parameters:
 			path: app/Services/AvailabilityService.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:when\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Services/AvailabilityService.php
+
+		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:where\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 2
@@ -1011,6 +1029,12 @@ parameters:
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
+			count: 1
+			path: app/Services/BookingService.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Services/BookingService.php
 

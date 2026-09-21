@@ -37,11 +37,15 @@ return [
     'action_mark_active' => 'Shëno aktiv',
     'action_complete' => 'Përfundo',
     'action_cancel' => 'Anulo',
+    'action_move' => 'Zhvendos',
     'action_agreement' => 'Shkarko kontratën',
     'pickup_time' => 'Ora e marrjes',
     'start_odometer' => 'Kilometrazhi në marrje (km)',
     'return_time' => 'Ora e kthimit',
     'end_odometer' => 'Kilometrazhi në kthim (km)',
+    'booking_moved_bell_title' => 'Rezervimi u zhvendos',
+    'moved_from_label' => 'Zhvendosur nga',
+    'moved_from_value' => ':vehicle, :start – :end',
 
     // Forma e automjetit
     'section_basics' => 'Të dhënat bazë',

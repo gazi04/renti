@@ -58,6 +58,18 @@ return [
     ],
 
     // Booking cancelled (customer or operator)
+    'booking_moved' => [
+        'subject' => 'Booking Updated — :reference',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Your booking dates have changed.',
+        'reference_label' => 'Reference',
+        'previous_label' => 'Previous',
+        'new_label' => 'New',
+        'vehicle_label' => 'Vehicle',
+        'dates_label' => 'Dates',
+        'outro' => 'If you have any questions, please contact :operator.',
+    ],
+
     'booking_cancelled' => [
         'subject' => 'Booking Cancelled — :reference',
         'bell_title' => 'Booking Cancelled by Customer',

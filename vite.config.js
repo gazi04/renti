@@ -67,6 +67,15 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        // Pinned to the IPv4 loopback, not the 'localhost' default: on this
+        // machine Node resolves that to ::1 only (no dual-stack bind), so
+        // public/hot ends up with a bracketed-IPv6 origin. Chromium's CSP
+        // parser rejects "http://[::1]:5173" as a source-list entry outright
+        // ("invalid source ... It will be ignored" in the console) regardless
+        // of any allow-list entry for it in SecurityHeaders::policy() — so
+        // every asset silently 404'd against the CSP. 127.0.0.1 sidesteps the
+        // bracket syntax entirely.
+        host: '127.0.0.1',
         cors: true,
         watch: {
             ignored: ['**/storage/framework/views/**'],

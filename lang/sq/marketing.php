@@ -18,20 +18,17 @@ return [
     'hero_note' => 'Nuk kërkohet kartë krediti. Miratim nga administratori, pastaj jeni online.',
 
     // Features
-    'features_heading' => 'Gjithçka që i duhet biznesit tuaj rent-a-car',
-    'features_subheading' => 'Një abonim, një panel, subdomeni juaj.',
+    'features_heading' => 'Gjithçka që i duhet biznesit tuaj rent-a-car online',
+    'features_subheading' => 'Pa zhvillues, pa komision për transaksion, pa surpriza.',
 
-    'feature_storefront_title' => 'Faqja juaj e rezervimeve me markën tuaj',
-    'feature_storefront_body' => 'Klientët rezervojnë makinat tuaja në subdomenin tuaj — logoja, ngjyrat dhe fonti juaj, pa llogari. Dygjuhëshe që në fillim (shqip dhe anglisht).',
+    'feature_brand_title' => 'Marka juaj, faqja juaj',
+    'feature_brand_body' => 'Ngarkoni logon, zgjidhni dy ngjyra dhe një font. Klientët tuaj nuk shohin markën tonë — faqja është 100% e juaja.',
 
-    'feature_fleet_title' => 'Menaxhimi i flotës dhe rezervimeve',
-    'feature_fleet_body' => 'Menaxhoni automjetet, fotot, çmimet dhe kalendarin e disponueshmërisë. Konfirmoni, refuzoni ose përfundoni rezervime me mbrojtje kundër dyfishimit të rezervimeve.',
+    'feature_bookings_title' => 'Rezervime & kontrata, automatike',
+    'feature_bookings_body' => 'Çdo rezervim vjen me konfirmim të menjëhershëm dhe një kontratë gati për t\'u nënshkruar — pa shkëmbime mesazhesh për ju apo klientin.',
 
-    'feature_automation_title' => 'Email-e dhe kontrata automatike',
-    'feature_automation_body' => 'Konfirmimet e rezervimeve, anulimet dhe kontratat PDF gjenerohen dhe dërgohen automatikisht — në gjuhën e klientit.',
-
-    'feature_dashboard_title' => 'Një panel, pa telashe konfigurimi',
-    'feature_dashboard_body' => 'Regjistrohuni, merrni miratimin dhe menaxhoni të gjithë biznesin tuaj rent-a-car nga një panel i vetëm — pa hosting, pa mirëmbajtje.',
+    'feature_money_title' => 'Ne nuk i prekim paratë tuaja',
+    'feature_money_body' => 'Klientët ju paguajnë drejtpërdrejt. Renti aplikon vetëm një tarifë fikse mujore — 0% komision në çdo rezervim, gjithmonë.',
 
     // Pricing
     'pricing_heading' => 'Çmime të thjeshta dhe transparente',
@@ -77,20 +74,24 @@ return [
     'cta_subheading' => 'Regjistroni biznesin tuaj, merrni miratimin dhe filloni të pranoni rezervime.',
     'cta_button' => 'Fillo provën tënde falas',
 
-    // How it works
-    'nav_how_it_works' => 'Si funksionon',
-    'how_heading' => 'Online në tre hapa të thjeshtë',
-    'how_subheading' => 'Nga regjistrimi te rezervimi i parë — pa aftësi teknike.',
-    'how_step_1_title' => 'Regjistroni biznesin tuaj',
-    'how_step_1_body' => 'Zgjidhni subdomenin tuaj, shtoni të dhënat e biznesit dhe dërgoni regjistrimin brenda minutash.',
-    'how_step_2_title' => 'Brendoni faqen & shtoni flotën',
-    'how_step_2_body' => 'Ngarkoni logon, zgjidhni ngjyrat dhe dizajnin, dhe shtoni automjetet me foto e çmime.',
-    'how_step_3_title' => 'Filloni të pranoni rezervime',
-    'how_step_3_body' => 'Shpërndani linkun tuaj — klientët rezervojnë online, ju konfirmoni nga paneli, email-et dërgohen automatikisht.',
-
     // Hero extras
     'hero_badge' => 'Ndërtuar për bizneset rent-a-car në Ballkan',
     'hero_mock_url' => 'biznesijuaj.renti.lol',
+    'hero_setup_title' => 'Konfiguro faqen tënde',
+    'hero_setup_step_1' => 'Ngarko logon tënde',
+    'hero_setup_step_2' => 'Zgjidh ngjyrat',
+    'hero_setup_step_3' => 'Shko online në subdomenin tënd',
+
+    // About
+    'about_eyebrow' => 'Rreth Renti',
+    'about_heading' => 'Ndërtuar për mënyrën si funksionojnë me të vërtetë bizneset rent-a-car.',
+    'about_body' => 'Renti lindi sepse çdo biznes rent-a-car me të cilin folëm i pranonte rezervimet përmes WhatsApp dhe telefonatave. Tani çdo operator mund të hapë një faqe me markën e tij — logoja, ngjyrat, subdomeni i tij — në kohën që duhet për të plotësuar një formular. Ne nuk i prekim kurrë paratë që klientët tuaj ju paguajnë.',
+    'about_panel_line' => 'Marka juaj. Subdomeni juaj.',
+
+    // Product demo
+    'demo_heading' => 'Shiko faqen tënde',
+    'demo_subheading' => 'E njëjta strukturë faqesh, flota juaj, marka juaj. Kështu do ta shohin klientët tuaj.',
+    'demo_caption' => 'Ballina · Lista e automjeteve · Detajet e automjetit · Rezervimi 3-hapa · Konfirmimi — gjithçka me markën tuaj, në çdo faqe.',
 
     // Stats strip
     'stat_setup_value' => 'Minuta',

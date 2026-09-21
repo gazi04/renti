@@ -10,6 +10,7 @@ use App\Enums\VehicleStatus;
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
+use App\Events\BookingMoved;
 use App\Events\BookingRejected;
 use App\Exceptions\CustomerNotEligibleException;
 use App\Exceptions\InvalidBookingWindowException;
@@ -178,6 +179,80 @@ class BookingService
     }
 
     /**
+     * Operator-side reschedule: change a booking's vehicle and/or dates while
+     * keeping its reference, re-checking availability under the same vehicle
+     * lock every create path uses (deep-audit finding 08 — cancel-and-rebook
+     * lost the reference, re-priced at today's rate, and left a gap for someone
+     * else to take the slot in between). Only Pending/Confirmed bookings are
+     * movable — Active has already locked in a start odometer/timestamp and
+     * Completed/Cancelled are settled; those need a different flow, not this one.
+     *
+     * Race-safe like transition(): the status guard rides in the same UPDATE as
+     * the new vehicle/dates/pricing, so a concurrent cancel/reject landing
+     * between our read and our write can't be silently overwritten.
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws InvalidArgumentException
+     * @throws InvalidBookingWindowException
+     * @throws VehicleNotAvailableException
+     */
+    public function move(Booking $booking, array $data): Booking
+    {
+        return DB::transaction(function () use ($booking, $data) {
+            // Re-read the pre-image from the database rather than trusting the
+            // caller's in-memory $booking — a Filament Action's schema fields
+            // sharing names with model columns (vehicle_id/start_date/end_date
+            // here) can leave the passed-in instance already carrying the
+            // submitted values by the time this runs, which would otherwise
+            // snapshot the NEW state as the "previous" one.
+            $before = Booking::query()->whereKey($booking->getKey())->firstOrFail();
+
+            [$vehicle, $start, $end] = $this->lockAndValidate($data, allowPastStart: true, allowUnlisted: true, excluding: $booking);
+
+            $price = $this->pricing->calculate($vehicle, $start, $end, $before->promoCode);
+
+            $updated = Booking::query()->whereKey($booking->getKey())
+                ->whereIn('status', [BookingStatus::Pending->value, BookingStatus::Confirmed->value])
+                ->update([
+                    'previous_vehicle_id' => $before->vehicle_id,
+                    'previous_start_date' => $before->start_date,
+                    'previous_end_date' => $before->end_date,
+                    'moved_at' => now(),
+                    'vehicle_id' => $vehicle->id,
+                    'start_date' => $start,
+                    'end_date' => $end,
+                    'rate_type' => $price['rate_type'],
+                    'subtotal' => $price['subtotal'],
+                    'discount_amount' => $price['discount'],
+                    'total' => $price['total'],
+                    'deposit' => $price['deposit'],
+                ]);
+
+            if ($updated === 0) {
+                $booking->refresh();
+
+                throw new InvalidArgumentException(
+                    sprintf('Booking must be pending or confirmed to be moved, got %s.', $booking->status->value)
+                );
+            }
+
+            $booking->refresh();
+
+            // The PDF is idempotent by file existence, not by content — an
+            // already-generated agreement must be force-regenerated or the next
+            // download silently serves the pre-move dates.
+            if ($booking->contract !== null) {
+                resolve(RentalAgreementService::class)->generate($booking, force: true);
+            }
+
+            event(new BookingMoved($booking));
+
+            return $booking;
+        });
+    }
+
+    /**
      * Cancel a booking that has sat Pending too long, on behalf of the hourly
      * bookings:expire-pending sweep. Deliberately not cancel(): that one accepts
      * any non-Completed status, and the sweep must never undo a booking the
@@ -214,13 +289,14 @@ class BookingService
      *
      * @param  bool  $allowPastStart  Operator-entered bookings may start in the past; customer ones may not.
      * @param  bool  $allowUnlisted  Operator-entered bookings may target a vehicle kept off the public site; customer ones may not.
+     * @param  Booking|null  $excluding  A booking being moved must not conflict with its own current row — see move().
      * @param  array<string, mixed>  $data
      * @return array{0: Vehicle, 1: CarbonInterface, 2: CarbonInterface}
      *
      * @throws InvalidBookingWindowException
      * @throws VehicleNotAvailableException
      */
-    private function lockAndValidate(array $data, bool $allowPastStart = false, bool $allowUnlisted = false): array
+    private function lockAndValidate(array $data, bool $allowPastStart = false, bool $allowUnlisted = false, ?Booking $excluding = null): array
     {
         // Lock the vehicle row — concurrent transactions queue behind this.
         $vehicle = Vehicle::query()->whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
@@ -233,7 +309,7 @@ class BookingService
         $this->assertBookableWindow($start, $end, $allowPastStart);
 
         try {
-            $available = $this->availability->isAvailable($vehicle, $start, $end);
+            $available = $this->availability->isAvailable($vehicle, $start, $end, $excluding?->id);
         } catch (InvalidArgumentException) {
             throw new VehicleNotAvailableException('The selected dates are invalid.');
         }
