@@ -16,10 +16,18 @@
     $panel = $this->notifyPanel;
     $lang = 'booking.'.\Illuminate\Support\Str::snake($panel['prefix']);
     $prefix = $panel['prefix'];
+
+    /**
+     * True when embedded inside the vehicle-show booking card (the mockup's
+     * "sold out" card state) rather than rendered as its own full-width
+     * section — the card is too narrow for the 3-column name/email/phone row,
+     * and its own border/shadow/padding already frame the content.
+     */
+    $compact = $compact ?? false;
 @endphp
 
-<section class="mt-8">
-    <div class="rounded-panel border border-line bg-surface-sunken p-5 shadow-sm sm:p-6">
+<div class="{{ $compact ? '' : 'mt-8' }}">
+    <div class="{{ $compact ? '' : 'rounded-panel border border-line bg-surface-sunken p-5 shadow-sm sm:p-6' }}">
         @if ($panel['joined'])
             <div class="flex items-start gap-3">
                 <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-positive-surface text-positive">
@@ -60,7 +68,7 @@
                     </div>
                 @endif
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div class="grid grid-cols-1 gap-4 {{ $compact ? '' : 'sm:grid-cols-3' }}">
                     <x-ui.field :label="__($lang.'_name')" :for="$prefix.'-name'" :name="$prefix.'Name'">
                         <x-ui.input :id="$prefix.'-name'" type="text" wire:model="{{ $prefix }}Name" />
                     </x-ui.field>
@@ -92,4 +100,4 @@
             @endif
         @endif
     </div>
-</section>
+</div>

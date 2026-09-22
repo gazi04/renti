@@ -55,7 +55,7 @@
                 {{-- Desktop nav --}}
                 <nav class="hidden items-center gap-8 text-sm font-medium text-ink-muted md:flex">
                     <a href="{{ route('public.home') }}" class="text-ink transition-colors hover:text-primary">{{ __('booking.nav_home') }}</a>
-                    <a href="{{ route('public.vehicles') }}" class="transition-colors hover:text-primary">{{ __('booking.nav_vehicles') }}</a>
+                    <a href="{{ route('public.vehicles') }}" class="transition-colors hover:text-primary {{ request()->routeIs('public.vehicles') ? 'font-semibold text-primary' : '' }}">{{ __('booking.nav_vehicles') }}</a>
                     <a href="{{ route('public.home') }}#about" class="transition-colors hover:text-primary">{{ __('booking.nav_about') }}</a>
                     <a href="#contact" class="transition-colors hover:text-primary">{{ __('booking.nav_contact') }}</a>
                 </nav>
@@ -95,7 +95,7 @@
         <nav id="public-mobile-nav" x-show="open" x-cloak class="border-t border-line bg-surface-raised md:hidden">
             <x-ui.container class="space-y-1 py-3 text-sm font-medium text-ink-muted">
                 <a href="{{ route('public.home') }}" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink">{{ __('booking.nav_home') }}</a>
-                <a href="{{ route('public.vehicles') }}" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink">{{ __('booking.nav_vehicles') }}</a>
+                <a href="{{ route('public.vehicles') }}" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink {{ request()->routeIs('public.vehicles') ? 'font-semibold text-primary' : '' }}">{{ __('booking.nav_vehicles') }}</a>
                 <a href="{{ route('public.home') }}#about" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink" @click="open = false">{{ __('booking.nav_about') }}</a>
                 <a href="#contact" class="flex min-h-11 items-center rounded-control px-2 hover:bg-surface-sunken hover:text-ink" @click="open = false">{{ __('booking.nav_contact') }}</a>
 

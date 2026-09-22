@@ -297,10 +297,12 @@ it('renders the page for an unavailable vehicle instead of 404ing', function () 
     $vehicle = unavailableVehicle();
 
     // The whole feature depends on this page existing — before #3 it 404'd, so
-    // there was nowhere to host the panel.
+    // there was nowhere to host the panel. The booking card shows the panel
+    // itself (not the plain notice, which only appears when the feature is
+    // off — see VehicleShowTest) since the plan allows it here.
     Livewire::test('pages::public.vehicle-show', ['vehicle' => $vehicle])
         ->assertOk()
-        ->assertSee(__('booking.vehicle_unavailable_notice'))
+        ->assertSee(__('booking.vehicle_unavailable_badge'))
         ->assertDontSee(__('booking.book_now'));
 });
 

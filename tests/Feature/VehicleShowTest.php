@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\PlanFeature;
 use App\Enums\VehicleStatus;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 
@@ -97,6 +99,52 @@ it('still serves the booking wizard at the /book URL', function () {
         ->assertSee(__('booking.pick_dates'));
 });
 
+// ── Price-breakdown preview ──────────────────────────────────────────────────
+
+it('shows a live price breakdown when a valid date range is carried from the listing page', function () {
+    $tenant = showTenant('showquote');
+
+    tenancy()->initialize($tenant);
+    $vehicle = showVehicle(['daily_rate' => 50, 'weekly_rate' => 300, 'deposit' => 100]);
+    tenancy()->end();
+
+    $start = now()->addDays(3)->format('Y-m-d');
+    $end = now()->addDays(7)->format('Y-m-d');
+
+    $this->get(tenant_url('showquote', "/vehicles/{$vehicle->id}?start_date={$start}&end_date={$end}"))
+        ->assertOk()
+        ->assertSee(__('booking.rates_pickup'))
+        ->assertSee(__('booking.rates_return'))
+        ->assertSee('€200.00') // 4 days × €50 daily rate — cheaper than the ineligible weekly tier
+        ->assertSee('€100.00'); // deposit still shown
+});
+
+it('falls back to the flat rate table when no date range is known', function () {
+    $tenant = showTenant('showquotenone');
+
+    tenancy()->initialize($tenant);
+    $vehicle = showVehicle(['daily_rate' => 50]);
+    tenancy()->end();
+
+    $this->get(tenant_url('showquotenone', "/vehicles/{$vehicle->id}"))
+        ->assertOk()
+        ->assertDontSee(__('booking.rates_pickup'))
+        ->assertSee('€50.00');
+});
+
+it('falls back to the flat rate table when the carried-forward dates are malformed', function () {
+    $tenant = showTenant('showquotebad');
+
+    tenancy()->initialize($tenant);
+    $vehicle = showVehicle(['daily_rate' => 50]);
+    tenancy()->end();
+
+    $this->get(tenant_url('showquotebad', "/vehicles/{$vehicle->id}?start_date=not-a-date&end_date=also-not-a-date"))
+        ->assertOk()
+        ->assertDontSee(__('booking.rates_pickup'))
+        ->assertSee('€50.00');
+});
+
 // ── Guards ────────────────────────────────────────────────────────────────────
 
 it('returns 404 for a private vehicle', function () {
@@ -119,10 +167,30 @@ it('renders a vehicle under maintenance without a booking CTA', function () {
 
     // This 404'd until the stock alert (#3): the page has to exist for the
     // "notify me when it is back" panel to have somewhere to live. Booking is
-    // still refused — see the booking-page guard below.
+    // still refused — see the booking-page guard below. Plan features default
+    // permissive, so the booking card shows the stock-alert form rather than
+    // the plain notice; either way there must be no Book Now CTA.
     $this->get(tenant_url('showmaint', "/vehicles/{$vehicle->id}"))
         ->assertOk()
-        ->assertSee(__('booking.vehicle_unavailable_notice'));
+        ->assertSee(__('booking.vehicle_unavailable_badge'))
+        ->assertDontSee(__('booking.book_now'));
+});
+
+it('renders the plain unavailable notice when the stock alert feature is off', function () {
+    Plan::factory()->create([
+        'slug' => 'showmaintnoalert-plan',
+        'features' => [PlanFeature::StockAlert->value => false],
+    ]);
+    $tenant = Tenant::factory()->withDomain('showmaintnoalert')->create(['plan' => 'showmaintnoalert-plan']);
+
+    tenancy()->initialize($tenant);
+    $vehicle = Vehicle::factory()->underMaintenance()->create();
+    tenancy()->end();
+
+    $this->get(tenant_url('showmaintnoalert', "/vehicles/{$vehicle->id}"))
+        ->assertOk()
+        ->assertSee(__('booking.vehicle_unavailable_notice'))
+        ->assertDontSee(__('booking.stock_alert_submit'));
 });
 
 it('returns 404 when requesting another tenant vehicle', function () {
@@ -153,7 +221,8 @@ it('renders the vehicle details shell with its rates and specs', function () {
     $this->get(tenant_url('showshell', "/vehicles/{$vehicle->id}"))
         ->assertOk()
         ->assertSee('Layout Show Car')
-        ->assertSee(__('booking.rates_heading'))
+        ->assertSee(__('booking.specs_heading'))
+        ->assertSee(__('booking.vehicle_available_badge'))
         ->assertSee(__('booking.book_now'));
 });
 
