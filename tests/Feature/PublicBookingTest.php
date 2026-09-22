@@ -344,6 +344,7 @@ it('creates a pending booking on submit and redirects to confirmation', function
         ->set('customerPhone', '+38344123456')
         ->set('customerEmail', 'gazi@example.com')
         ->call('nextStep')           // advance to step 3
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertRedirect();
 
@@ -516,6 +517,29 @@ it('requires a customer email to advance from step 2', function () {
         ->assertSet('step', 3);
 });
 
+it('blocks submit until the rental-terms checkbox is checked', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->set('startDate', '2030-06-01')
+        ->set('endDate', '2030-06-04')
+        ->set('customerName', 'Gazi Halili')
+        ->set('customerPhone', '+38344123456')
+        ->set('customerEmail', 'gazi@example.com')
+        ->set('step', 3)
+        ->call('submit')
+        ->assertHasErrors(['termsAccepted'])
+        ->assertSet('step', 3)
+        ->set('termsAccepted', true)
+        ->call('submit')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+
+    expect(Booking::count())->toBe(1);
+});
+
 it('bounces to step 1 and shows slot-taken flash on double booking', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
@@ -533,6 +557,7 @@ it('bounces to step 1 and shows slot-taken flash on double booking', function ()
         ->set('customerPhone', '+38344000000')
         ->set('customerEmail', 'renter@example.com')
         ->set('step', 3)
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertSet('slotTaken', true)
         ->assertSet('step', 1);
@@ -554,6 +579,7 @@ it('throttles repeated booking submissions from the same visitor', function () {
             ->set('customerPhone', '+38344000000')
             ->set('customerEmail', "spam{$i}@example.com")
             ->set('step', 3)
+            ->set('termsAccepted', true)
             ->call('submit')
             ->assertSet('submitError', null);
     }
@@ -565,6 +591,7 @@ it('throttles repeated booking submissions from the same visitor', function () {
         ->set('customerPhone', '+38344000000')
         ->set('customerEmail', 'spam6@example.com')
         ->set('step', 3)
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertSet('submitError', __('booking.submit_throttled'));
 
@@ -590,6 +617,7 @@ it('does not charge the submission throttle for validation failures', function (
             ->set('customerPhone', '+38344000000')
             ->set('customerEmail', 'invalid@example.com')
             ->set('step', 3)
+            ->set('termsAccepted', true)
             ->call('submit')
             ->assertHasErrors(['customerName' => 'required']);
     }
@@ -601,6 +629,7 @@ it('does not charge the submission throttle for validation failures', function (
         ->set('customerPhone', '+38344000000')
         ->set('customerEmail', 'valid@example.com')
         ->set('step', 3)
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertSet('submitError', null);
 
@@ -627,6 +656,7 @@ it('throttles submissions fleet-wide once a visitor spreads attempts across many
             ->set('customerPhone', '+38344000000')
             ->set('customerEmail', "fleet{$i}@example.com")
             ->set('step', 3)
+            ->set('termsAccepted', true)
             ->call('submit')
             ->assertSet('submitError', null);
     }
@@ -642,6 +672,7 @@ it('throttles submissions fleet-wide once a visitor spreads attempts across many
         ->set('customerPhone', '+38344000000')
         ->set('customerEmail', 'fleet20@example.com')
         ->set('step', 3)
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertSet('submitError', __('booking.submit_throttled'));
 

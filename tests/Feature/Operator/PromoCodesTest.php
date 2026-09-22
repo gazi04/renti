@@ -343,7 +343,8 @@ it('recovers gracefully when a promo fails at the final submit despite passing t
         'end_date' => '2030-07-04',
     ]);
 
-    $component->call('submit')
+    $component->set('termsAccepted', true)
+        ->call('submit')
         ->assertSet('promoCode', '')
         ->assertSet('priceBreakdown.total', 150.0)
         ->assertSet('promoError', __('booking.promo_removed_recalculated'));

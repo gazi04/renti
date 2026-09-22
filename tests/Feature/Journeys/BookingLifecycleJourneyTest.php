@@ -49,6 +49,7 @@ it('carries a storefront booking into the operator inbox and back out as a confi
         ->set('customerPhone', '+38344123456')
         ->set('customerEmail', 'journey@example.com')
         ->call('nextStep')
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertRedirect();
 
