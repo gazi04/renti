@@ -2,7 +2,7 @@
 @php
     $tenant = $booking->vehicle->tenant ?? null;
     $logoUrl = $tenant?->logoUrlForEmail();
-    $colorPrimary = $tenant?->colorPrimary() ?? config('branding.defaults.color_primary', '#2563eb');
+    $colorPrimary = $tenant?->colorPrimary() ?? config('branding.defaults.color_primary');
     $paymentInstructions = $tenant?->setting('payment_instructions');
 @endphp
 
