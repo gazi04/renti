@@ -1,7 +1,7 @@
 {{-- Adopts the storefront shell — see cancel-confirm.blade.php. --}}
 <x-layouts::public :title="__('booking.booking_cancelled')">
-    <div class="mx-auto w-full max-w-lg px-4 py-8 sm:px-6 sm:py-12">
-        <x-ui.card pad="lg" class="text-center">
+    <div class="mx-auto flex min-h-[60vh] w-full max-w-lg items-center px-4 py-8 sm:px-6 sm:py-12">
+        <x-ui.card pad="lg" class="w-full text-center shadow-lg">
             @if ($alreadyDone)
                 <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-surface-sunken text-ink-muted">
                     <flux:icon.information-circle class="size-7" />
