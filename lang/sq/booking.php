@@ -178,6 +178,12 @@ return [
     'confirm_cancel_button' => 'Po, anuloje këtë rezervim',
     'keep_booking' => 'Jo, dua ta mbaj rezervimin',
 
+    // 404 — faqja nuk u gjet
+    'not_found_heading' => 'Duket se kjo rrugë nuk të çon askund',
+    'not_found_body' => 'Faqja që po kërkoni nuk ekziston, mund të jetë zhvendosur, ose ai automjet është hequr nga lista.',
+    'not_found_back_home' => 'Kthehu në fillim',
+    'not_found_browse_vehicles' => 'Shfleto automjetet',
+
     // Kodet promocionale
     'promo_label' => 'Kodi promocional',
     'promo_placeholder' => 'Shkruani një kod',

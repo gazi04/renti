@@ -178,6 +178,12 @@ return [
     'confirm_cancel_button' => 'Yes, cancel this booking',
     'keep_booking' => 'No, keep my booking',
 
+    // 404 — page not found
+    'not_found_heading' => 'Looks like this road doesn\'t go anywhere',
+    'not_found_body' => 'The page you\'re looking for doesn\'t exist, may have moved, or that vehicle listing has been taken down.',
+    'not_found_back_home' => 'Back to home',
+    'not_found_browse_vehicles' => 'Browse vehicles',
+
     // Promo codes
     'promo_label' => 'Promo code',
     'promo_placeholder' => 'Enter a code',
