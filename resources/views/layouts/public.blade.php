@@ -139,7 +139,7 @@
                 @endphp
 
                 {{-- Brand --}}
-                <div class="lg:col-span-2">
+                <div class="min-w-0 lg:col-span-2">
                     <x-ui.brand-mark onDark />
                     @if($footerText)
                         <p class="mt-4 max-w-xs text-sm text-ink-inverse/70">{{ $footerText }}</p>
