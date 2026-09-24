@@ -14,14 +14,14 @@
         "vite": "^8.3.0"
     },
     "optionalDependencies": {
-        "@rollup/rollup-linux-x64-gnu": "4.63.1",
+        "@rollup/rollup-linux-x64-gnu": "4.63.3",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.2",
         "playwright": "^1.63.0",
-        "prettier": "^3.9.6",
+        "prettier": "^3.9.8",
         "prettier-plugin-blade": "^3.3.3",
         "prettier-plugin-tailwindcss": "^0.8.1",
         "tailwindcss": "^4.3.2"
