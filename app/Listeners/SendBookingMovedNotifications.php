@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\BookingMoved;
 use App\Mail\BookingMovedMail;
+use App\Models\Tenant;
 use App\Models\User;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,9 +17,19 @@ class SendBookingMovedNotifications implements ShouldQueue
         $booking = $event->booking;
 
         if (filled($booking->customer_email)) {
+            $tenant = Tenant::query()->find($booking->tenant_id);
+
+            // isSelfCancellable() is already guaranteed by move()'s own status
+            // guard, but this listener is queued — by the time it runs, a
+            // fast follow-up cancel/expire could in principle have landed
+            // first. Same non-re-locking guard SendBookingConfirmedEmail uses.
+            $cancelUrl = $booking->isSelfCancellable()
+                ? $tenant?->signedRouteUrl('public.booking.cancel', $booking->start_date, ['booking' => $booking->id])
+                : null;
+
             Mail::to($booking->customer_email)
                 ->locale($booking->locale ?? 'sq')
-                ->queue(new BookingMovedMail($booking));
+                ->queue(new BookingMovedMail($booking, $cancelUrl));
         }
 
         // Operator-initiated (this pass has no customer self-service path), so

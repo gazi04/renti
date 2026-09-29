@@ -147,6 +147,81 @@ it('is triggered by a rejected booking too, not only a cancelled one', function 
     expect($entry->fresh()->notified_at)->not->toBeNull();
 });
 
+it('is triggered by a moved booking that frees its old vehicle', function () {
+    Mail::fake();
+    waitlistTenant('wlmoveveh', [PlanFeature::Waitlist->value => true], 'wlmovevehplan');
+    $oldVehicle = Vehicle::factory()->create();
+    $newVehicle = Vehicle::factory()->create();
+
+    $booking = waitlistBooking($oldVehicle, '2030-06-01 10:00', '2030-06-05 10:00');
+    $entry = WaitlistEntry::factory()->forDates('2030-06-01', '2030-06-05')->create(['vehicle_id' => $oldVehicle->id]);
+
+    app(BookingService::class)->move($booking, [
+        'vehicle_id' => $newVehicle->id,
+        'start_date' => '2030-07-01 10:00',
+        'end_date' => '2030-07-05 10:00',
+    ]);
+
+    Mail::assertQueued(WaitlistSlotOpenMail::class, 1);
+    expect($entry->fresh()->notified_at)->not->toBeNull();
+});
+
+it('is triggered by a moved booking that frees its old (non-overlapping) dates on the same vehicle', function () {
+    Mail::fake();
+    waitlistTenant('wlmovedates', [PlanFeature::Waitlist->value => true], 'wlmovedatesplan');
+    $vehicle = Vehicle::factory()->create();
+
+    $booking = waitlistBooking($vehicle, '2030-06-01 10:00', '2030-06-05 10:00');
+    $entry = WaitlistEntry::factory()->forDates('2030-06-01', '2030-06-05')->create(['vehicle_id' => $vehicle->id]);
+
+    app(BookingService::class)->move($booking, [
+        'vehicle_id' => $vehicle->id,
+        'start_date' => '2030-08-01 10:00',
+        'end_date' => '2030-08-05 10:00',
+    ]);
+
+    Mail::assertQueued(WaitlistSlotOpenMail::class, 1);
+    expect($entry->fresh()->notified_at)->not->toBeNull();
+});
+
+it('does not notify when a same-vehicle move still overlaps the old dates', function () {
+    Mail::fake();
+    waitlistTenant('wlmoveoverlap', [PlanFeature::Waitlist->value => true], 'wlmoveoverlapplan');
+    $vehicle = Vehicle::factory()->create();
+
+    // Extending the rental on the same car — the old window isn't actually
+    // free, the moved booking still covers it. A naive fix would wrongly
+    // tell this entry the car is available.
+    $booking = waitlistBooking($vehicle, '2030-06-01 10:00', '2030-06-05 10:00');
+    $entry = WaitlistEntry::factory()->forDates('2030-06-01', '2030-06-05')->create(['vehicle_id' => $vehicle->id]);
+
+    app(BookingService::class)->move($booking, [
+        'vehicle_id' => $vehicle->id,
+        'start_date' => '2030-06-01 10:00',
+        'end_date' => '2030-06-10 10:00',
+    ]);
+
+    Mail::assertNotQueued(WaitlistSlotOpenMail::class);
+    expect($entry->fresh()->notified_at)->toBeNull();
+});
+
+it('does not notify on a move when the plan disables the waitlist feature', function () {
+    Mail::fake();
+    waitlistTenant('wlmoveoff', [PlanFeature::Waitlist->value => false], 'wlmoveoffplan');
+    $oldVehicle = Vehicle::factory()->create();
+    $newVehicle = Vehicle::factory()->create();
+
+    $booking = waitlistBooking($oldVehicle, '2030-06-01 10:00', '2030-06-05 10:00');
+
+    app(BookingService::class)->move($booking, [
+        'vehicle_id' => $newVehicle->id,
+        'start_date' => '2030-07-01 10:00',
+        'end_date' => '2030-07-05 10:00',
+    ]);
+
+    Mail::assertNotQueued(WaitlistSlotOpenMail::class);
+});
+
 it('never mails the same entry twice', function () {
     Mail::fake();
     [$tenant] = waitlistTenant('wlonce', [PlanFeature::Waitlist->value => true], 'wlonceplan');

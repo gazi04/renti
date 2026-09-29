@@ -57,7 +57,7 @@ return [
         'outro' => 'Ju lutemi provoni data të tjera ose kontaktoni drejtpërdrejt :operator.',
     ],
 
-    // Rezervimi anuluar (klienti ose operatori)
+    // Rezervimi u zhvendos/riplanifikua nga operatori
     'booking_moved' => [
         'subject' => 'Rezervimi u Përditësua — :reference',
         'greeting' => 'Përshëndetje :name,',
@@ -67,6 +67,8 @@ return [
         'new_label' => 'Tani',
         'vehicle_label' => 'Automjeti',
         'dates_label' => 'Datat',
+        'cancel_action' => 'Anulo Rezervimin',
+        'cancel_note' => 'Mund ta anuloni këtë rezervim në çdo kohë para se të fillojë qiraja, duke përdorur lidhjen e mësipërme.',
         'outro' => 'Nëse keni pyetje, ju lutemi kontaktoni :operator.',
     ],
 
