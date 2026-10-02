@@ -2,7 +2,7 @@
 @php
     $tenant = $booking->vehicle->tenant ?? null;
     $logoUrl = $tenant?->logoUrlForEmail();
-    $colorPrimary = $tenant?->colorPrimary() ?? config('branding.defaults.color_primary', '#2563eb');
+    $colorPrimary = $tenant?->colorPrimary() ?? config('branding.defaults.color_primary');
 @endphp
 
 @if($logoUrl)
@@ -26,6 +26,14 @@
 @endif
 | **{{ __('emails.booking_moved.new_label') }} — {{ __('emails.booking_moved.vehicle_label') }}** | {{ $booking->vehicle->name }} |
 | **{{ __('emails.booking_moved.new_label') }} — {{ __('emails.booking_moved.dates_label') }}** | {{ $booking->start_date->format('d M Y') }} – {{ $booking->end_date->format('d M Y') }} |
+
+@if(!empty($cancelUrl))
+<x-mail::button :url="$cancelUrl">
+{{ __('emails.booking_moved.cancel_action') }}
+</x-mail::button>
+
+{{ __('emails.booking_moved.cancel_note') }}
+@endif
 
 {{ __('emails.booking_moved.outro', ['operator' => $operator]) }}
 </x-mail::message>

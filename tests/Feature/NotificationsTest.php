@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BookingStatus;
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
@@ -264,6 +265,50 @@ test('move emails the customer and sends the operator a bell notification', func
     // reasoning as an operator-initiated cancel).
     Mail::assertNotQueued(BookingMovedMail::class, fn ($m) => $m->hasTo($this->operator->email));
     expect($this->operator->notifications()->count())->toBe($notificationsBefore + 1);
+});
+
+test('move mails the customer a freshly signed cancel link', function () {
+    tenancy()->end();
+
+    $tenant = Tenant::factory()->withDomain('movecancellink')->create();
+    tenancy()->initialize($tenant);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+
+    Mail::fake();
+
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $vehicle->id,
+        'customer_email' => 'ana@example.com',
+        'status' => BookingStatus::Confirmed,
+        'start_date' => now()->addDays(10),
+    ]);
+
+    $listener = new SendBookingMovedNotifications;
+    $listener->handle(new BookingMoved($booking));
+
+    Mail::assertQueued(BookingMovedMail::class, fn ($m) => $m->cancelUrl !== null
+        && str_contains($m->cancelUrl, 'signature='));
+});
+
+test('move omits the cancel link when the booking is no longer self-cancellable', function () {
+    tenancy()->end();
+
+    $tenant = Tenant::factory()->withDomain('movenocancel')->create();
+    tenancy()->initialize($tenant);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+
+    Mail::fake();
+
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $vehicle->id,
+        'customer_email' => 'ana@example.com',
+        'status' => BookingStatus::Completed,
+    ]);
+
+    $listener = new SendBookingMovedNotifications;
+    $listener->handle(new BookingMoved($booking));
+
+    Mail::assertQueued(BookingMovedMail::class, fn ($m) => $m->cancelUrl === null);
 });
 
 test('move sends no mail when the booking has no customer email', function () {

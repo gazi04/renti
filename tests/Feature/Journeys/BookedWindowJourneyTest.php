@@ -45,6 +45,7 @@ it('closes a booked window to the next customer, then reopens it when the operat
         ->set('customerPhone', '+38344111111')
         ->set('customerEmail', 'a@example.com')
         ->call('nextStep')
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertRedirect();
 
@@ -77,6 +78,7 @@ it('closes a booked window to the next customer, then reopens it when the operat
         ->set('customerPhone', '+38344222222')
         ->set('customerEmail', 'b@example.com')
         ->call('nextStep')
+        ->set('termsAccepted', true)
         ->call('submit')
         ->assertSet('slotTaken', true);
 

@@ -7,6 +7,7 @@ use App\Enums\VehicleStatus;
 use App\Models\Vehicle;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -127,6 +128,27 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
     }
 
     /**
+     * Every filter except category, shared by vehicles() and categoryCounts()
+     * so the two can never drift apart. Category is optional here because a
+     * category's own sidebar count must not be narrowed by its own filter —
+     * only by whichever OTHER filters are active.
+     */
+    private function filteredQuery(bool $includeCategory = true): Builder
+    {
+        return Vehicle::query()
+            ->where('is_public', true)
+            ->when($includeCategory && $this->category !== '', fn ($q) => $q->where('category', $this->category))
+            ->when($this->transmission !== '', fn ($q) => $q->where('transmission', $this->transmission))
+            ->when($this->fuelType !== '', fn ($q) => $q->where('fuel_type', $this->fuelType))
+            ->when($this->seats !== '', fn ($q) => $q->where('seats', '>=', (int) $this->seats))
+            ->when($this->year !== '', fn ($q) => $q->where('year', (int) $this->year))
+            ->when($this->minPrice !== '', fn ($q) => $q->where('daily_rate', '>=', (float) $this->minPrice))
+            ->when($this->maxPrice !== '', fn ($q) => $q->where('daily_rate', '<=', (float) $this->maxPrice))
+            ->when($this->search !== '', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($this->search).'%']))
+            ->when($this->parsedDateRange(), fn ($q, array $range) => $q->availableBetween($range[0], $range[1]));
+    }
+
+    /**
      * Unavailable vehicles are listed, not hidden (backlog #3) — their page is
      * where the stock alert lives, so removing them from the fleet would leave
      * nothing to click. They sort last so the bookable fleet still leads, and
@@ -135,23 +157,48 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
     #[Computed]
     public function vehicles(): LengthAwarePaginator
     {
-        return Vehicle::query()
-            ->where('is_public', true)
+        return $this->filteredQuery()
             ->orderByRaw('CASE WHEN status = ? THEN 0 ELSE 1 END', [VehicleStatus::Available->value])
             ->when($this->sort === 'price_asc', fn ($q) => $q->orderBy('daily_rate'))
             ->when($this->sort === 'price_desc', fn ($q) => $q->orderByDesc('daily_rate'))
             ->when($this->sort === '' || $this->sort === 'newest', fn ($q) => $q->latest())
             ->with('media')
-            ->when($this->category, fn ($q) => $q->where('category', $this->category))
-            ->when($this->transmission, fn ($q) => $q->where('transmission', $this->transmission))
-            ->when($this->fuelType, fn ($q) => $q->where('fuel_type', $this->fuelType))
-            ->when($this->seats !== '', fn ($q) => $q->where('seats', '>=', (int) $this->seats))
-            ->when($this->year !== '', fn ($q) => $q->where('year', (int) $this->year))
-            ->when($this->minPrice !== '', fn ($q) => $q->where('daily_rate', '>=', (float) $this->minPrice))
-            ->when($this->maxPrice !== '', fn ($q) => $q->where('daily_rate', '<=', (float) $this->maxPrice))
-            ->when($this->search !== '', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($this->search).'%']))
-            ->when($this->parsedDateRange(), fn ($q, array $range) => $q->availableBetween($range[0], $range[1]))
             ->paginate(12);
+    }
+
+    /**
+     * Per-category vehicle counts for the sidebar checklist, narrowed by every
+     * OTHER active filter. Reads getRawOriginal() rather than the cast
+     * attribute so the array key is the plain enum-backing string, not a
+     * VehicleCategory instance (which can't be an array key).
+     *
+     * @return array<string, int>
+     */
+    #[Computed]
+    public function categoryCounts(): array
+    {
+        return $this->filteredQuery(includeCategory: false)
+            ->selectRaw('category, count(*) as aggregate')
+            ->groupBy('category')
+            ->get()
+            ->mapWithKeys(fn (Vehicle $row) => [$row->getRawOriginal('category') => (int) $row->getAttribute('aggregate')])
+            ->all();
+    }
+
+    /** Live "N vehicles available [for <range>]" line under the H1. */
+    public function resultsSummary(): string
+    {
+        $count = $this->vehicles->total();
+        $range = $this->parsedDateRange();
+
+        if ($range === null) {
+            return trans_choice('booking.filters_results_count', $count, ['count' => $count]);
+        }
+
+        return trans_choice('booking.filters_results_count_with_range', $count, [
+            'count' => $count,
+            'range' => $range[0]->format('j M').' – '.$range[1]->format('j M'),
+        ]);
     }
 
     /** @return array<int, VehicleCategory> */
@@ -197,9 +244,18 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
 
 }; ?>
 
-<x-ui.container class="py-8 sm:py-12">
-    <x-ui.section-heading level="h1">{{ __('booking.browse_fleet') }}</x-ui.section-heading>
+<div>
+{{-- Title band --}}
+<div class="border-b border-line bg-surface-sunken">
+    <x-ui.container class="py-8">
+        <h1 class="text-2xl font-bold text-ink sm:text-3xl">{{ __('booking.browse_fleet') }}</h1>
+        <p class="mt-1 text-sm text-ink-muted" wire:loading.class="opacity-60" wire:target="category,transmission,fuelType,seats,year,minPrice,maxPrice,search,sort">
+            {{ $this->resultsSummary() }}
+        </p>
+    </x-ui.container>
+</div>
 
+<x-ui.container class="py-8 sm:py-12">
     {{-- Below md the filter panel collapses behind a toggle so the fleet itself
          is what a visitor sees first on a phone. x-show, not x-if: the inputs
          must stay in the DOM for the flatpickr instances in vehicle-filters.js
@@ -209,7 +265,7 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
          by id — the second picker would silently never initialise. --}}
     <div x-data="{ open: false, desktop: window.matchMedia('(min-width: 768px)').matches }"
          x-init="window.matchMedia('(min-width: 768px)').addEventListener('change', e => desktop = e.matches)"
-         class="mt-6">
+         class="md:flex md:items-start md:gap-10">
         <x-ui.button variant="secondary"
                      class="w-full md:hidden"
                      x-on:click="open = ! open"
@@ -219,27 +275,30 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
             {{ __('booking.filters_toggle') }}
         </x-ui.button>
 
-        <div id="fleet-filters" class="mt-4 md:mt-0" x-show="open || desktop" x-cloak>
+        <div id="fleet-filters" class="mt-4 shrink-0 md:mt-0 md:w-64" x-show="open || desktop" x-cloak>
             @include('pages.public.partials.vehicles._filters')
         </div>
-    </div>
 
-    @if ($this->vehicles->isEmpty())
-        <x-ui.empty-state icon="truck" :title="__('booking.no_vehicles')" class="mt-8" />
-    @else
-        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach ($this->vehicles as $vehicle)
-                <div wire:key="vehicle-{{ $vehicle->id }}">
-                    @include('pages.public.partials.vehicles._card')
+        <div class="mt-8 min-w-0 flex-1 md:mt-0">
+            @if ($this->vehicles->isEmpty())
+                <x-ui.empty-state icon="truck" :title="__('booking.no_vehicles')" />
+            @else
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($this->vehicles as $vehicle)
+                        <div wire:key="vehicle-{{ $vehicle->id }}">
+                            @include('pages.public.partials.vehicles._card')
+                        </div>
+                    @endforeach
                 </div>
-            @endforeach
-        </div>
 
-        <div class="mt-8">
-            {{ $this->vehicles->links() }}
+                <div class="mt-8">
+                    {{ $this->vehicles->links() }}
+                </div>
+            @endif
         </div>
-    @endif
+    </div>
 </x-ui.container>
+</div>
 
 @push('scripts')
     @vite('resources/js/vehicle-filters.js')

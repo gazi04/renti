@@ -1,13 +1,25 @@
-{{-- Vehicle title bar: name, year, category badge, quick specs. --}}
+{{-- Vehicle title bar: breadcrumb, name, rating (when reviewed), quick specs.
+     Category now shown as a badge over the gallery photo instead of here —
+     see _gallery.blade.php. --}}
 <div>
-    <a href="{{ route('public.vehicles') }}"
-       class="inline-flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
-        <flux:icon.arrow-left class="size-4" />{{ __('booking.back_to_fleet') }}
-    </a>
+    <nav aria-label="{{ __('booking.nav_home') }}" class="flex flex-wrap items-center gap-1.5 text-xs text-ink-faint">
+        <a href="{{ route('public.home') }}" class="hover:text-ink">{{ __('booking.nav_home') }}</a>
+        <span aria-hidden="true">/</span>
+        <a href="{{ route('public.vehicles') }}" class="hover:text-ink">{{ __('booking.nav_vehicles') }}</a>
+        <span aria-hidden="true">/</span>
+        <span class="font-semibold text-ink-muted">{{ $vehicle->name }}</span>
+    </nav>
 
-    <div class="mt-2 flex flex-wrap items-center gap-3">
+    <div class="mt-2 flex flex-wrap items-baseline justify-between gap-3">
         <h1 class="text-2xl font-bold text-ink sm:text-3xl">{{ $vehicle->name }}</h1>
-        <x-ui.badge>{{ $vehicle->category->getLabel() }}</x-ui.badge>
+
+        @if ($this->averageRating !== null)
+            <span class="inline-flex items-center gap-1.5 text-sm text-ink-muted">
+                <x-ui.stars :rating="$this->averageRating" />
+                <span class="font-semibold text-ink">{{ number_format($this->averageRating, 1) }}</span>
+                <span class="text-ink-faint">({{ trans_choice('booking.reviews_count', $this->reviews->count(), ['count' => $this->reviews->count()]) }})</span>
+            </span>
+        @endif
     </div>
 
     {{-- Wraps: four unbreakable spans in a row overflowed a 320px screen. --}}

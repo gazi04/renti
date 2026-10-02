@@ -83,9 +83,9 @@ return [
     'color_format' => '/^#[0-9a-fA-F]{6}$/',
 
     'defaults' => [
-        'color_primary' => '#2563eb',
-        'color_secondary' => '#1e40af',
-        'font_family' => 'Inter',
+        'color_primary' => '#2e4bff',
+        'color_secondary' => '#1b32d8',
+        'font_family' => 'Poppins',
         'default_locale' => 'sq',
     ],
 ];

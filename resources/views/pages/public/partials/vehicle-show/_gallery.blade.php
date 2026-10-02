@@ -38,6 +38,8 @@
                 @endforeach
             </div>
 
+            <x-ui.badge tone="surface" class="absolute left-3 top-3">{{ $vehicle->category->getLabel() }}</x-ui.badge>
+
             @if (count($photos) > 1)
                 <button type="button"
                         @click="prev()"
@@ -84,7 +86,8 @@
         @endif
     </div>
 @else
-    <div class="flex aspect-video items-center justify-center rounded-panel bg-surface-sunken text-ink-faint">
+    <div class="relative flex aspect-video items-center justify-center rounded-panel bg-surface-sunken text-ink-faint">
         <flux:icon.truck class="size-16" />
+        <x-ui.badge tone="surface" class="absolute left-3 top-3">{{ $vehicle->category->getLabel() }}</x-ui.badge>
     </div>
 @endif

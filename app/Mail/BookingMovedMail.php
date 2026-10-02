@@ -24,7 +24,10 @@ class BookingMovedMail extends Mailable implements ShouldQueue
     use SerializesModels;
     use ThrottlesMailQueue;
 
-    public function __construct(public readonly Booking $booking) {}
+    public function __construct(
+        public readonly Booking $booking,
+        public readonly ?string $cancelUrl = null,
+    ) {}
 
     public function envelope(): Envelope
     {
@@ -46,6 +49,7 @@ class BookingMovedMail extends Mailable implements ShouldQueue
             with: [
                 'booking' => $this->booking,
                 'operator' => $operator,
+                'cancelUrl' => $this->cancelUrl,
             ],
         );
     }

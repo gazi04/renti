@@ -57,7 +57,7 @@ return [
         'outro' => 'Please try booking different dates or contact :operator directly.',
     ],
 
-    // Booking cancelled (customer or operator)
+    // Booking moved/rescheduled by the operator
     'booking_moved' => [
         'subject' => 'Booking Updated — :reference',
         'greeting' => 'Hello :name,',
@@ -67,6 +67,8 @@ return [
         'new_label' => 'New',
         'vehicle_label' => 'Vehicle',
         'dates_label' => 'Dates',
+        'cancel_action' => 'Cancel Booking',
+        'cancel_note' => 'You can cancel this booking any time before your rental starts using the link above.',
         'outro' => 'If you have any questions, please contact :operator.',
     ],
 

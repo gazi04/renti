@@ -83,6 +83,19 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
         return Review::query()->where('is_approved', true)->count();
     }
 
+    /**
+     * Public fleet size for the About-page stat grid. Same visibility filter as
+     * featuredVehicles() — never counts private or maintenance-parked vehicles.
+     */
+    #[Computed]
+    public function fleetSize(): int
+    {
+        return Vehicle::query()
+            ->where('is_public', true)
+            ->where('status', VehicleStatus::Available)
+            ->count();
+    }
+
 }; ?>
 
 <div>
@@ -93,19 +106,29 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
 
     {{-- Full-bleed hero: a plain section with a background. No w-screen escape
          is needed because <main> imposes no container. --}}
-    <section class="bg-gradient-to-br from-primary to-secondary">
-        <x-ui.container class="py-16 sm:py-24 lg:py-28">
+    <section class="bg-gradient-to-b from-surface-sunken to-surface">
+        <x-ui.container class="py-16 sm:py-20 lg:py-24">
             @include('pages.public.partials.home._hero')
         </x-ui.container>
     </section>
 
-    <x-ui.container class="space-y-16 py-16 sm:space-y-24 sm:py-24">
+    <x-ui.container class="py-12 sm:py-16">
+        @include('pages.public.partials.home._trust-strip')
+    </x-ui.container>
+
+    <x-ui.container class="space-y-16 pb-16 sm:space-y-24 sm:pb-24">
+        @include('pages.public.partials.home._about')
         @include('pages.public.partials.home._services')
         @include('pages.public.partials.home._featured')
-        @include('pages.public.partials.home._about')
 
         @if ($this->showsReviewShowcase)
             @include('pages.public.partials.home._reviews')
         @endif
     </x-ui.container>
+
+    <section class="bg-gradient-to-br from-primary to-secondary">
+        <x-ui.container class="py-16 sm:py-20">
+            @include('pages.public.partials.home._cta-banner')
+        </x-ui.container>
+    </section>
 </div>

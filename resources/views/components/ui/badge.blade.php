@@ -9,6 +9,10 @@
         'positive' => 'bg-positive-surface text-positive',
         'critical' => 'bg-critical-surface text-critical',
         'notice' => 'bg-notice-surface text-notice',
+        // For a badge overlaid on a photo of unknown colour — needs guaranteed
+        // contrast rather than a semantic surface token.
+        'surface' => 'bg-surface-raised/95 text-ink shadow-sm',
+        'inverse' => 'bg-ink/85 text-ink-inverse',
     ];
 @endphp
 

@@ -4,7 +4,9 @@ use App\Enums\PlanFeature;
 use App\Enums\VehicleStatus;
 use App\Models\Review;
 use App\Models\Vehicle;
+use App\Services\PricingService;
 use App\Services\WaitlistService;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\RateLimiter;
@@ -109,6 +111,62 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
         return $reviews->isNotEmpty() ? round((float) $reviews->avg('rating'), 1) : null;
     }
 
+    /**
+     * The date-range filter is driven entirely by query-string input forwarded
+     * from the listing page, so it must never trust the raw strings — a
+     * malformed value should just disable the preview, not 500. Same pattern as
+     * vehicle-listing.blade.php's parsedDateRange().
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}|null
+     */
+    private function parsedDateRange(): ?array
+    {
+        if ($this->startDate === '' || $this->endDate === '') {
+            return null;
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->startDate) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->endDate)) {
+            return null;
+        }
+
+        try {
+            $start = CarbonImmutable::createFromFormat('Y-m-d', $this->startDate)->startOfDay();
+            $end = CarbonImmutable::createFromFormat('Y-m-d', $this->endDate)->startOfDay();
+        } catch (\Exception) {
+            return null;
+        }
+
+        return $start->lt($end) ? [$start, $end] : null;
+    }
+
+    /**
+     * A live quote for the exact dates carried forward from the listing page's
+     * filter — null when no valid range is known, in which case the booking
+     * card falls back to the flat rate table instead (see _rates.blade.php).
+     * Reuses PricingService directly so the math can never drift from what the
+     * booking wizard actually charges.
+     *
+     * @return array{rate_type: \App\Enums\RateType, subtotal: float, discount: float, total: float, deposit: float, days: int, start: CarbonImmutable, end: CarbonImmutable}|null
+     */
+    #[Computed]
+    public function priceBreakdown(): ?array
+    {
+        $range = $this->parsedDateRange();
+
+        if ($range === null) {
+            return null;
+        }
+
+        [$start, $end] = $range;
+        $pricing = resolve(PricingService::class);
+
+        return [
+            ...$pricing->calculate($this->vehicle, $start, $end),
+            'days' => $pricing->rentalDays($start, $end),
+            'start' => $start,
+            'end' => $end,
+        ];
+    }
 
     // ── Waitlist (backlog #2) ───────────────────────────────────────────────────
 
@@ -346,7 +404,12 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
 
     @include('pages.public.partials.vehicle-show._reviews')
 
-    @if ($this->notifyPanel)
+    {{-- Stock alert (backlog #3) lives inside the booking card itself
+         (_rates.blade.php) — the mockup's "sold out" card has no separate
+         full-width section. Waitlist (#2) has no equivalent in that two-state
+         card model — a bookable vehicle whose exact dates are taken still
+         needs its own place to ask, so it stays here unchanged. --}}
+    @if ($this->showsWaitlist)
         @include('pages.public.partials.vehicle-show._notify')
     @endif
 </x-ui.container>

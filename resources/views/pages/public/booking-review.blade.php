@@ -91,19 +91,32 @@ new #[Layout('layouts.public')] #[Title('Leave a Review')] class extends Compone
             </div>
         @elseif ($unavailable)
             <div class="text-center">
+                <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-surface-sunken text-ink-faint">
+                    <flux:icon.information-circle class="size-7" />
+                </div>
                 <h1 class="mb-2 text-xl font-bold text-ink">{{ __('booking.review_unavailable') }}</h1>
             </div>
         @elseif ($alreadyReviewed)
             <div class="text-center">
+                <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-surface-sunken text-ink-faint">
+                    <flux:icon.information-circle class="size-7" />
+                </div>
                 <h1 class="mb-2 text-xl font-bold text-ink">{{ __('booking.review_already') }}</h1>
             </div>
         @else
-            <h1 class="mb-1 text-2xl font-bold text-ink">{{ __('booking.review_title') }}</h1>
-            <p class="mb-6 text-sm text-ink-muted">{{ $booking->vehicle->name }}</p>
+            <div class="text-center">
+                <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <flux:icon.truck class="size-7" />
+                </div>
+                <h1 class="mb-1 text-2xl font-bold text-ink">{{ __('booking.review_title') }}</h1>
+                <p class="mb-6 text-sm text-ink-muted">
+                    {{ $booking->vehicle->name }} · {{ $booking->start_date->format('d M Y') }} – {{ $booking->end_date->format('d M Y') }}
+                </p>
+            </div>
 
             <form wire:submit="submit" class="space-y-6">
                 <div>
-                    <label id="rating-label" class="mb-2 block text-sm font-medium text-ink">{{ __('booking.review_rating') }}</label>
+                    <label id="rating-label" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-ink-faint">{{ __('booking.review_rating') }}</label>
                     {{-- role=radio + aria-checked to match the radiogroup: without
                          them a screen reader hears five unlabelled buttons and no
                          indication of which rating is currently chosen. --}}
@@ -126,12 +139,14 @@ new #[Layout('layouts.public')] #[Title('Leave a Review')] class extends Compone
                 </div>
 
                 <x-ui.field :label="__('booking.review_comment')" for="comment" name="comment">
-                    <x-ui.textarea id="comment" wire:model="comment" rows="4" />
+                    <x-ui.textarea id="comment" wire:model="comment" rows="4" placeholder="{{ __('booking.review_comment_placeholder') }}" />
                 </x-ui.field>
 
                 <x-ui.button type="submit" class="w-full">
                     {{ __('booking.review_submit') }}
                 </x-ui.button>
+
+                <p class="text-center text-xs text-ink-faint">{{ __('booking.review_link_note') }}</p>
             </form>
         @endif
     </x-ui.card>
