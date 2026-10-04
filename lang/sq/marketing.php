@@ -106,4 +106,73 @@ return [
     'footer_product' => 'Produkti',
     'footer_get_started' => 'Fillo tani',
 
+    'nav_faq' => 'Pyetje',
+
+    // SEO <head> per marketing page (title ≤ ~60 chars, description ≤ ~155).
+    'meta_home_title' => 'Softuer për rent-a-car në Kosovë — Renti',
+    'meta_home_description' => 'Faqe rezervimesh me markën tuaj, panel flote dhe kontrata automatike për bizneset rent-a-car në Kosovë. Provë falas, pa kartë krediti.',
+    'meta_pricing_title' => 'Çmimet e softuerit për rent-a-car — Renti',
+    'meta_pricing_description' => 'Plane mujore të thjeshta për bizneset rent-a-car në Kosovë. Paguani me transfertë bankare ose para në dorë — pa kartë krediti, 0% komision.',
+    'meta_faq_title' => 'Pyetje të shpeshta për softuerin rent-a-car — Renti',
+    'meta_faq_description' => 'Si funksionon Renti, si paguhet abonimi pa kartë, prova falas, subdomeni juaj dhe pagesat e klientëve — përgjigje të qarta për bizneset rent-a-car.',
+
+    // Pricing page
+    'pricing_page_heading' => 'Çmime të thjeshta për softuerin tuaj rent-a-car',
+    'pricing_page_subheading' => 'Një tarifë fikse mujore, pa komision për rezervim. Paguani me transfertë bankare ose para në dorë — nuk ju duhet kartë krediti.',
+    'billing_heading' => 'Si funksionon pagesa',
+    'billing_subheading' => 'Pa portë pagese online dhe pa kartë krediti — e ndërtuar për mënyrën si paguajnë bizneset në Kosovë.',
+    'billing_trial_title' => ':trial_days ditë falas',
+    'billing_trial_body' => 'Pas miratimit, llogaria juaj është aktive falas për :trial_days ditë. Nuk kërkohet kartë.',
+    'billing_payment_title' => 'Transfertë bankare ose para në dorë',
+    'billing_payment_body' => 'Pas provës, paguani tarifën mujore me transfertë bankare ose para në dorë. Ne e regjistrojmë pagesën dhe periudha juaj vazhdon.',
+    'billing_reminders_title' => 'Kujtesa para afatit',
+    'billing_reminders_body' => 'Ju njoftojmë me email para se të skadojë periudha. Nëse vonoheni, keni edhe :grace_days ditë kohë para se llogaria të pezullohet.',
+    'billing_commission_title' => '0% komision',
+    'billing_commission_body' => 'Klientët tuaj ju paguajnë drejtpërdrejt. Renti nuk merr asnjë përqindje nga rezervimet tuaja.',
+    'billing_faq_prompt' => 'Keni pyetje të tjera për pagesat?',
+
+    // FAQ page. Each item is rendered on the page AND emitted as FAQPage
+    // structured data, so keep answers as plain text.
+    'faq_heading' => 'Pyetje të shpeshta',
+    'faq_subheading' => 'Gjithçka që duhet të dini para se ta hapni faqen e rezervimeve për biznesin tuaj rent-a-car.',
+    'faq_cta_text' => 'Gati për të filluar? Hapni faqen tuaj sot.',
+    'faq_items' => [
+        [
+            'question' => 'Çfarë është Renti?',
+            'answer' => 'Renti është softuer për bizneset rent-a-car në Kosovë dhe Ballkan. Ju jep një faqe rezervimesh me markën tuaj, një panel për flotën dhe rezervimet, kontrata automatike dhe email-e për klientët — pa pasur nevojë për zhvillues.',
+        ],
+        [
+            'question' => 'Pse nuk paguhet abonimi me kartë?',
+            'answer' => 'Portat e njohura të pagesave online nuk mbështesin pagesat në Kosovë, prandaj Renti nuk varet prej tyre. Abonimin e paguani me transfertë bankare ose para në dorë, dhe ne e regjistrojmë pagesën manualisht.',
+        ],
+        [
+            'question' => 'Si funksionon prova falas?',
+            'answer' => 'Regjistroni biznesin tuaj dhe, pasi ta miratojmë, faqja juaj është online menjëherë. Periudha e provës është falas dhe nuk kërkon kartë krediti. Para se të përfundojë, ju dërgojmë kujtesë me email.',
+        ],
+        [
+            'question' => 'A merrni komision nga rezervimet e mia?',
+            'answer' => 'Jo. Renti aplikon vetëm një tarifë fikse mujore sipas planit që zgjidhni. Nuk marrim asnjë përqindje nga rezervimet tuaja.',
+        ],
+        [
+            'question' => 'Si më paguajnë klientët për rezervimet?',
+            'answer' => 'Klientët ju paguajnë drejtpërdrejt juve, me para në dorë ose me transfertë bankare, siç punoni sot. Renti nuk i prek kurrë paratë mes jush dhe klientëve tuaj.',
+        ],
+        [
+            'question' => 'A do ta ketë faqja markën time?',
+            'answer' => 'Po. Faqja hapet në subdomenin tuaj dhe përdor logon, ngjyrat dhe fontin tuaj. Klientët tuaj shohin biznesin tuaj, jo Renti.',
+        ],
+        [
+            'question' => 'Në cilat gjuhë është faqja?',
+            'answer' => 'Në shqip dhe anglisht. Klientët zgjedhin gjuhën vetë, dhe email-et e kontratat dërgohen në gjuhën që kanë zgjedhur.',
+        ],
+        [
+            'question' => 'A më duhen njohuri teknike?',
+            'answer' => 'Jo. Plotësoni një formular, ngarkoni logon dhe automjetet tuaja, dhe faqja juaj është gati. Gjithçka menaxhohet nga paneli, pa kod.',
+        ],
+        [
+            'question' => 'Çfarë ndodh nëse vonohem me pagesën?',
+            'answer' => 'Ju njoftojmë me email para dhe pas afatit. Pas një periudhe të shkurtër shtesë, llogaria pezullohet derisa të regjistrohet pagesa.',
+        ],
+    ],
+
 ];

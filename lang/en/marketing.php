@@ -106,4 +106,73 @@ return [
     'footer_product' => 'Product',
     'footer_get_started' => 'Get started',
 
+    'nav_faq' => 'FAQ',
+
+    // SEO <head> per marketing page (title ≤ ~60 chars, description ≤ ~155).
+    'meta_home_title' => 'Car rental software for Kosovo & the Balkans — Renti',
+    'meta_home_description' => 'Branded booking website, fleet dashboard and automatic contracts for car rental businesses in Kosovo. Free trial, no credit card needed.',
+    'meta_pricing_title' => 'Car rental software pricing — Renti',
+    'meta_pricing_description' => 'Simple monthly plans for car rental businesses in Kosovo. Pay by bank transfer or cash — no credit card, no payment gateway, 0% commission.',
+    'meta_faq_title' => 'Car rental software FAQ — Renti',
+    'meta_faq_description' => 'How Renti works, paying without a card, the free trial, your own subdomain and customer payments — clear answers for car rental businesses.',
+
+    // Pricing page
+    'pricing_page_heading' => 'Simple pricing for your car rental software',
+    'pricing_page_subheading' => 'One flat monthly fee, no commission per booking. Pay by bank transfer or cash — no credit card required.',
+    'billing_heading' => 'How billing works',
+    'billing_subheading' => 'No online payment gateway and no credit card — built for the way businesses in Kosovo actually pay.',
+    'billing_trial_title' => ':trial_days days free',
+    'billing_trial_body' => 'Once approved, your account is live for free for :trial_days days. No card required.',
+    'billing_payment_title' => 'Bank transfer or cash',
+    'billing_payment_body' => 'After the trial, pay the monthly fee by bank transfer or cash. We record the payment and your period carries on.',
+    'billing_reminders_title' => 'Reminders before the due date',
+    'billing_reminders_body' => 'We email you before your period ends. If you are late, you still have :grace_days days before the account is suspended.',
+    'billing_commission_title' => '0% commission',
+    'billing_commission_body' => 'Your customers pay you directly. Renti never takes a percentage of your bookings.',
+    'billing_faq_prompt' => 'More questions about billing?',
+
+    // FAQ page. Each item is rendered on the page AND emitted as FAQPage
+    // structured data, so keep answers as plain text.
+    'faq_heading' => 'Frequently asked questions',
+    'faq_subheading' => 'Everything you need to know before you open the booking website for your car rental business.',
+    'faq_cta_text' => 'Ready to start? Open your booking site today.',
+    'faq_items' => [
+        [
+            'question' => 'What is Renti?',
+            'answer' => 'Renti is software for car rental businesses in Kosovo and the Balkans. It gives you a booking website with your own brand, a dashboard for your fleet and bookings, automatic contracts and customer emails — no developers needed.',
+        ],
+        [
+            'question' => 'Why can\'t I pay the subscription by card?',
+            'answer' => 'The well-known online payment gateways do not support payouts in Kosovo, so Renti does not depend on them. You pay the subscription by bank transfer or cash, and we record the payment manually.',
+        ],
+        [
+            'question' => 'How does the free trial work?',
+            'answer' => 'Register your business and, once we approve it, your site is online right away. The trial period is free and needs no credit card. We email you a reminder before it ends.',
+        ],
+        [
+            'question' => 'Do you take a commission on my bookings?',
+            'answer' => 'No. Renti charges only a flat monthly fee for the plan you choose. We never take a percentage of your bookings.',
+        ],
+        [
+            'question' => 'How do my customers pay for their bookings?',
+            'answer' => 'Your customers pay you directly, in cash or by bank transfer, the way you work today. Renti never touches the money between you and your customers.',
+        ],
+        [
+            'question' => 'Will the website carry my brand?',
+            'answer' => 'Yes. The site runs on your own subdomain and uses your logo, colors and font. Your customers see your business, not Renti.',
+        ],
+        [
+            'question' => 'Which languages does the website support?',
+            'answer' => 'Albanian and English. Customers pick the language themselves, and emails and contracts are sent in the language they chose.',
+        ],
+        [
+            'question' => 'Do I need technical skills?',
+            'answer' => 'No. Fill in a form, upload your logo and your vehicles, and your site is ready. Everything is managed from the dashboard, without code.',
+        ],
+        [
+            'question' => 'What happens if I pay late?',
+            'answer' => 'We email you before and after the due date. After a short grace period the account is suspended until the payment is recorded.',
+        ],
+    ],
+
 ];
