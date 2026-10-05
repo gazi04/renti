@@ -12,7 +12,7 @@ it('has no horizontal overflow on a small phone', function () {
     Plan::factory()->create(['slug' => 'basic', 'name' => 'Basic', 'price' => 20, 'is_active' => true, 'is_public' => true, 'sort_order' => 1]);
     Plan::factory()->create(['slug' => 'standard', 'name' => 'Standard', 'price' => 40, 'is_active' => true, 'is_public' => true, 'sort_order' => 2]);
 
-    $page = visit('/')->withHost(config('tenancy.central_domain'));
+    $page = visit('/sq')->withHost(config('tenancy.central_domain'));
 
     foreach ([320, 375] as $width) {
         $page->resize($width, 720)->assertNoJavascriptErrors();

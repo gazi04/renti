@@ -33,7 +33,9 @@ function designSystemViews(): array
     return array_values(array_filter([
         $base.'/layouts/public.blade.php',
         $base.'/livewire/faq-concierge.blade.php',
-        $base.'/marketing/home.blade.php',
+        $base.'/layouts/marketing.blade.php',
+        ...glob($base.'/marketing/*.blade.php') ?: [],
+        ...glob($base.'/marketing/partials/*.blade.php') ?: [],
         $base.'/public/cancel-confirm.blade.php',
         $base.'/public/cancel-result.blade.php',
         $base.'/public/unavailable.blade.php',
