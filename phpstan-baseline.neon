@@ -145,18 +145,6 @@ parameters:
 			path: app/Filament/Operator/Resources/Reviews/ReviewResource.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\BlockedDate\>\:\:whereIn\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/ServiceRecords/Pages/CreateServiceRecord.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:whereIn\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/ServiceRecords/Pages/CreateServiceRecord.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -589,19 +577,7 @@ parameters:
 			path: app/Jobs/ProcessVehicleMaintenanceJob.php
 
 		-
-			message: '#^Cannot call method isPast\(\) on Illuminate\\Support\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Jobs/ProcessVehicleMaintenanceJob.php
-
-		-
 			message: '#^Cannot call method isSameDay\(\) on Illuminate\\Support\\Carbon\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Jobs/ProcessVehicleMaintenanceJob.php
-
-		-
-			message: '#^Cannot call method isToday\(\) on Illuminate\\Support\\Carbon\|null\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: app/Jobs/ProcessVehicleMaintenanceJob.php
@@ -619,9 +595,27 @@ parameters:
 			path: app/Jobs/ProcessVehicleMaintenanceJob.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:whereNotNull\(\)\.$#'
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:distinct\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
+			path: app/Jobs/ProcessVehicleMaintenanceJob.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:latestOfItsType\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Jobs/ProcessVehicleMaintenanceJob.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:select\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Jobs/ProcessVehicleMaintenanceJob.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:whereNotNull\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
 			path: app/Jobs/ProcessVehicleMaintenanceJob.php
 
 		-
@@ -773,6 +767,12 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Models/PromoCode.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:whereNotExists\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Models/ServiceRecord.php
 
 		-
 			message: '#^Cannot access property \$domain on mixed\.$#'
@@ -1079,6 +1079,30 @@ parameters:
 			identifier: cast.useless
 			count: 2
 			path: app/Services/TemplateRenderer.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\BlockedDate\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Services/VehicleMaintenanceService.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:latestOfItsType\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Services/VehicleMaintenanceService.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Services/VehicleMaintenanceService.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\ServiceRecord\>\:\:whereNotNull\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Services/VehicleMaintenanceService.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\WaitlistEntry\>\:\:whereDate\(\)\.$#'

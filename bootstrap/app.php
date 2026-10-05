@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\ForwardedHostTenancyGuard;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\SetMarketingLocale;
 use App\Http\Middleware\StrictTransportSecurity;
 use App\Http\Middleware\ThrottlePasswordResetRequests;
 use Illuminate\Foundation\Application;
@@ -76,6 +77,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'set-locale' => SetLocale::class,
+            'marketing-locale' => SetMarketingLocale::class,
         ]);
 
         // Rate-limits Fortify's password-reset POSTs, which the package ships

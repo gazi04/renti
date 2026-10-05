@@ -13,7 +13,7 @@ use App\Models\Plan;
  * These tests pin the fix: the page reads live plan data.
  */
 
-function marketingUrl(string $path = '/'): string
+function marketingUrl(string $path = '/sq'): string
 {
     return 'http://'.config('tenancy.central_domain').$path;
 }
@@ -60,8 +60,8 @@ it('renders each plan card from the admin-curated tagline and highlights, locali
         ->assertSee('items-stretch', escape: false)
         ->assertSee('whitespace-nowrap', escape: false);
 
-    // The tagline follows the session locale.
-    $this->withSession(['locale' => 'en'])->get(marketingUrl())
+    // The tagline follows the page's language.
+    $this->get(marketingUrl('/en'))
         ->assertOk()
         ->assertSee('For growing fleets.')
         ->assertDontSee('Për flota në rritje.');
@@ -156,12 +156,13 @@ it('shows at most four plans on the pricing page', function () {
 
 it('exposes the nav sections to phones through a no-javascript disclosure', function () {
     // The links were `hidden sm:flex` with no replacement, so Features / How it
-    // works / Pricing were unreachable from the header on a phone.
+    // works / Pricing were unreachable from the header on a phone. Pricing is now
+    // its own page, so the menu links to it rather than to the #pricing anchor.
     $this->get(marketingUrl())
         ->assertOk()
         ->assertSee('<details', escape: false)
         ->assertSee('#features', escape: false)
-        ->assertSee('#pricing', escape: false);
+        ->assertSee('href="'.marketingUrl('/sq/cmimet').'"', escape: false);
 });
 
 it('loads no third-party assets', function () {

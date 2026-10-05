@@ -9,6 +9,7 @@ use App\Models\ServiceRecord;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\BlockedDateService;
+use App\Services\VehicleMaintenanceService;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
@@ -53,12 +54,29 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
             // outside production, an N+1 inside it. whereHas('vehicle') already
             // excludes trashed vehicles and the eager load applies the same scopes,
             // so every surviving row still has a non-null vehicle.
+            // Self-heal first: release any block whose record has since been
+            // superseded or rescheduled. The panel pages release on save, but
+            // this also catches vehicles left stuck before that existed, and any
+            // future write path that forgets to. Runs before blocking so a
+            // vehicle still overdue for another service type is re-checked below.
+            $maintenance = resolve(VehicleMaintenanceService::class);
+
+            ServiceRecord::query()
+                ->whereNotNull('blocked_date_id')
+                ->select('vehicle_id')
+                ->distinct()
+                ->get()
+                ->each(fn (ServiceRecord $linked) => $maintenance->releaseResolvedBlocks($linked->vehicle_id));
+
+            // latestOfItsType(): an older record of the same service type is
+            // history, not a reminder — it must neither block nor remind.
             ServiceRecord::query()
                 ->whereNotNull('next_due_on')
+                ->latestOfItsType()
                 ->whereHas('vehicle')
                 ->with('vehicle')
                 ->each(function (ServiceRecord $record) use ($owners, $blockedDates): void {
-                    if ($record->next_due_on->isPast() || $record->next_due_on->isToday()) {
+                    if ($record->isOverdue()) {
                         $this->autoBlock($record, $owners, $blockedDates);
 
                         return;
