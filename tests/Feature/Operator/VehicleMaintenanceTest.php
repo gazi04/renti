@@ -3,6 +3,7 @@
 use App\Enums\PlanFeature;
 use App\Enums\VehicleStatus;
 use App\Filament\Operator\Resources\ServiceRecords\Pages\CreateServiceRecord;
+use App\Filament\Operator\Resources\ServiceRecords\Pages\EditServiceRecord;
 use App\Filament\Operator\Resources\ServiceRecords\Pages\ListServiceRecords;
 use App\Filament\Operator\Resources\ServiceRecords\ServiceRecordResource;
 use App\Jobs\ProcessVehicleMaintenanceJob;
@@ -187,17 +188,20 @@ it('does not re-check the plan inside the maintenance job — the command is the
         ->and($vehicle->refresh()->status)->toBe(VehicleStatus::UnderMaintenance);
 });
 
-it('clears the vehicle\'s active maintenance block when a new service record is logged', function () {
+it('clears the vehicle\'s active maintenance block and makes it available when a new service record is logged', function () {
     maintenanceTenant('maintclear', [PlanFeature::MaintenanceReminders->value => true], 'clearplan');
-    $vehicle = Vehicle::factory()->create();
+    $vehicle = Vehicle::factory()->underMaintenance()->create();
 
     $blockedDate = BlockedDate::factory()->forVehicle($vehicle)->create([
         'reason' => 'maintenance',
         'start_date' => now(),
         'end_date' => now()->addDays(3),
     ]);
+    // Same type as the record logged below: only a newer record of the SAME
+    // service type supersedes the overdue one.
     ServiceRecord::factory()->overdue()->create([
         'vehicle_id' => $vehicle->id,
+        'service_type' => 'oil_change',
         'blocked_date_id' => $blockedDate->id,
     ]);
 
@@ -212,6 +216,145 @@ it('clears the vehicle\'s active maintenance block when a new service record is 
 
     expect(BlockedDate::query()->count())->toBe(0)
         ->and(ServiceRecord::query()->whereNotNull('blocked_date_id')->count())->toBe(0);
+
+    expect($vehicle->fresh()->status)->toBe(VehicleStatus::Available);
+});
+
+/**
+ * Run the sweep the way the scheduler does, then put the test back in tenant
+ * context — the job always ends tenancy in its finally block, and the operator
+ * panel pages used afterwards need it initialized.
+ */
+function sweepMaintenance(Tenant $tenant): void
+{
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
+
+    tenancy()->initialize($tenant);
+}
+
+function logServiceViaPanel(Vehicle $vehicle, string $serviceType): void
+{
+    Livewire::test(CreateServiceRecord::class)
+        ->fillForm([
+            'vehicle_id' => $vehicle->id,
+            'service_type' => $serviceType,
+            'performed_on' => now()->toDateString(),
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+}
+
+it('keeps the vehicle released on the next sweep after the overdue service is logged', function () {
+    // The regression: logging the service used to unlink the old record while
+    // its next_due_on stayed in the past, so the following sweep re-blocked the
+    // car — every day, forever.
+    [$tenant] = maintenanceTenant('maintloop', [PlanFeature::MaintenanceReminders->value => true], 'loopplan');
+    $vehicle = Vehicle::factory()->create();
+    $oldRecord = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id, 'service_type' => 'oil_change']);
+    sweepMaintenance($tenant);
+    logServiceViaPanel($vehicle, 'oil_change');
+
+    sweepMaintenance($tenant);
+
+    expect(BlockedDate::query()->count())->toBe(0);
+    expect($vehicle->fresh()->status)->toBe(VehicleStatus::Available);
+    expect($oldRecord->fresh()->next_due_on)->not->toBeNull();
+});
+
+it('keeps the block when the logged service is a different type than the overdue one', function () {
+    [$tenant] = maintenanceTenant('maintothertype', [PlanFeature::MaintenanceReminders->value => true], 'othertypeplan');
+    $vehicle = Vehicle::factory()->create();
+    $overdue = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id, 'service_type' => 'oil_change']);
+    sweepMaintenance($tenant);
+
+    logServiceViaPanel($vehicle, 'tyres');
+
+    expect($overdue->fresh()->blocked_date_id)->not->toBeNull();
+    expect($vehicle->fresh()->status)->toBe(VehicleStatus::UnderMaintenance);
+});
+
+it('ignores an overdue record that a later-performed service of the same type replaced, even if logged afterwards', function () {
+    // Order is by performed_on, not created_at: the stale record is created
+    // second, as an operator back-filling last year's history would.
+    [$tenant] = maintenanceTenant('maintbackfill', [PlanFeature::MaintenanceReminders->value => true], 'backfillplan');
+    $vehicle = Vehicle::factory()->create();
+    ServiceRecord::factory()->create([
+        'vehicle_id' => $vehicle->id,
+        'service_type' => 'oil_change',
+        'performed_on' => today(),
+        'next_due_on' => today()->addMonths(3),
+    ]);
+    ServiceRecord::factory()->overdue()->create([
+        'vehicle_id' => $vehicle->id,
+        'service_type' => 'oil_change',
+        'performed_on' => today()->subYear(),
+    ]);
+
+    sweepMaintenance($tenant);
+
+    expect(BlockedDate::query()->count())->toBe(0);
+    expect($vehicle->fresh()->status)->toBe(VehicleStatus::Available);
+});
+
+it('sends no reminder for a record that a newer service of the same type replaced', function () {
+    Mail::fake();
+    [$tenant] = maintenanceTenant('maintsuperseded', [PlanFeature::MaintenanceReminders->value => true], 'supersededplan');
+    $vehicle = Vehicle::factory()->create();
+    ServiceRecord::factory()->due()->create(['vehicle_id' => $vehicle->id, 'service_type' => 'tyres']);
+    ServiceRecord::factory()->create(['vehicle_id' => $vehicle->id, 'service_type' => 'tyres', 'performed_on' => today()]);
+
+    sweepMaintenance($tenant);
+
+    Mail::assertNothingQueued();
+});
+
+it('releases the vehicle when the overdue record\'s due date is moved forward', function () {
+    [$tenant] = maintenanceTenant('maintedit', [PlanFeature::MaintenanceReminders->value => true], 'editplan');
+    $vehicle = Vehicle::factory()->create();
+    $record = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id]);
+    sweepMaintenance($tenant);
+
+    Livewire::test(EditServiceRecord::class, ['record' => $record->id])
+        ->fillForm(['next_due_on' => today()->addMonth()->toDateString()])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(BlockedDate::query()->count())->toBe(0);
+    expect($record->fresh()->blocked_date_id)->toBeNull();
+    expect($vehicle->fresh()->status)->toBe(VehicleStatus::Available);
+});
+
+it('releases a vehicle the old code left stuck, on the sweep alone', function () {
+    // Production-shaped leftover of the bug: the newer same-type record was
+    // logged before this fix, so no panel action will ever run the release —
+    // the sweep has to heal it on its own.
+    [$tenant] = maintenanceTenant('maintheal', [PlanFeature::MaintenanceReminders->value => true], 'healplan');
+    $vehicle = Vehicle::factory()->underMaintenance()->create();
+    $blockedDate = BlockedDate::factory()->forVehicle($vehicle)->create([
+        'reason' => 'maintenance',
+        'start_date' => today(),
+        'end_date' => today()->addDays(3),
+    ]);
+    ServiceRecord::factory()->overdue()->create([
+        'vehicle_id' => $vehicle->id,
+        'service_type' => 'brakes',
+        'blocked_date_id' => $blockedDate->id,
+    ]);
+    ServiceRecord::factory()->create(['vehicle_id' => $vehicle->id, 'service_type' => 'brakes', 'performed_on' => today()]);
+
+    sweepMaintenance($tenant);
+
+    expect(BlockedDate::query()->count())->toBe(0);
+    expect($vehicle->fresh()->status)->toBe(VehicleStatus::Available);
+});
+
+it('leaves a vehicle the operator put under maintenance by hand untouched when a service is logged', function () {
+    maintenanceTenant('maintmanual', [PlanFeature::MaintenanceReminders->value => true], 'manualplan');
+    $vehicle = Vehicle::factory()->underMaintenance()->create();
+
+    logServiceViaPanel($vehicle, 'inspection');
+
+    expect($vehicle->fresh()->status)->toBe(VehicleStatus::UnderMaintenance);
 });
 
 it('skips a service record whose vehicle was soft-deleted, without fataling the whole sweep', function () {
