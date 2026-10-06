@@ -16,6 +16,7 @@ use App\Models\Vehicle;
 use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
 covers(BookingService::class);
@@ -427,6 +428,52 @@ it('fires BookingMoved event on move', function () {
         'start_date' => '2030-07-01',
         'end_date' => '2030-07-05',
     ]);
+
+    Event::assertDispatched(BookingMoved::class);
+});
+
+it('holds BookingCreated until the surrounding transaction commits', function () {
+    Event::fake([BookingCreated::class]);
+
+    DB::transaction(function () {
+        $this->service->create(bookingData($this->vehicle));
+
+        Event::assertNotDispatched(BookingCreated::class);
+    });
+
+    Event::assertDispatched(BookingCreated::class);
+});
+
+it('never dispatches BookingCreated when the surrounding transaction rolls back', function () {
+    Event::fake([BookingCreated::class]);
+
+    try {
+        DB::transaction(function () {
+            $this->service->create(bookingData($this->vehicle));
+
+            throw new RuntimeException('rolled back');
+        });
+    } catch (RuntimeException) {
+        // expected
+    }
+
+    Event::assertNotDispatched(BookingCreated::class);
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('holds BookingMoved until the surrounding transaction commits', function () {
+    Event::fake([BookingMoved::class]);
+    $booking = $this->service->create(bookingData($this->vehicle));
+
+    DB::transaction(function () use ($booking) {
+        $this->service->move($booking, [
+            'vehicle_id' => $this->vehicle->id,
+            'start_date' => '2030-07-01',
+            'end_date' => '2030-07-05',
+        ]);
+
+        Event::assertNotDispatched(BookingMoved::class);
+    });
 
     Event::assertDispatched(BookingMoved::class);
 });

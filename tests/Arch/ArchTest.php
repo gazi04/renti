@@ -60,6 +60,15 @@ arch('enums')
     ->expect('App\Enums')
     ->toBeEnums();
 
+/*
+ * Every event feeds queued listeners that email or notify people. Fired inside
+ * a DB transaction, a worker could otherwise run them against the pre-commit
+ * row (stale data) or for a booking that rolled back (phantom mail).
+ */
+arch('events wait for the transaction to commit')
+    ->expect('App\Events')
+    ->toImplement('Illuminate\Contracts\Events\ShouldDispatchAfterCommit');
+
 arch('commands')
     ->expect('App\Console\Commands')
     ->toExtend('Illuminate\Console\Command');
