@@ -77,8 +77,8 @@ Route::middleware([
             abort(404);
         });
 
-    // Signed cancellation link, valid until the booking's start_date (deep-audit
-    // finding 07) — no auth required. Honoured while the booking is Pending or
+    // Signed cancellation link, valid until the end of the booking's pickup day
+    // (Booking::pickupDeadline(); deep-audit finding 07) — no auth required. Honoured while the booking is Pending or
     // Confirmed (Booking::isSelfCancellable()); Active/Completed/Cancelled show
     // a "not cancellable" page instead. GET renders a confirm page (no mutation,
     // safe for email link-prescanners); POST performs the actual cancellation.

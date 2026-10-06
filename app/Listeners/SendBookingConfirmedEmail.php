@@ -34,7 +34,7 @@ class SendBookingConfirmedEmail implements ShouldQueue
         // still finds a working cancel link, not just the original one.
         $cancelUrl = $tenant?->signedRouteUrl(
             'public.booking.cancel',
-            $booking->start_date,
+            $booking->pickupDeadline(),
             ['booking' => $booking->id],
         );
 

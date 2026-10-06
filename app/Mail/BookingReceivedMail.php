@@ -34,8 +34,9 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
                 'public.booking.cancel',
                 // Once the rental would start, self-cancel no longer means
                 // anything — same reasoning as Booking::isSelfCancellable(),
-                // expressed as a deadline instead of a status.
-                $booking->start_date,
+                // expressed as a deadline instead of a status. The whole pickup
+                // day, so a same-day booking's link isn't dead on arrival.
+                $booking->pickupDeadline(),
                 ['booking' => $booking->id],
             );
         }

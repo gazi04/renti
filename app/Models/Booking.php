@@ -106,6 +106,22 @@ class Booking extends Model
     }
 
     /**
+     * The last moment the rental can still begin: the end of the pickup day,
+     * not its first second. The storefront date picker is date-only, so
+     * start_date is stored at 00:00 — treating that as "the pickup" expired
+     * same-day bookings within the hour and killed their cancel links on
+     * arrival. Shared by the pending-expiry sweep and every cancel-link signer.
+     *
+     * The app runs on UTC while the market is UTC+1/+2, so this ends 1–2 hours
+     * after local midnight: permissive by a little, never early (the same
+     * reasoning as BookingService::assertBookableWindow()).
+     */
+    public function pickupDeadline(): CarbonImmutable
+    {
+        return $this->start_date->endOfDay();
+    }
+
+    /**
      * Whether an operator may move this booking to new dates/vehicle
      * (BookingService::move()) — same Pending/Confirmed pair as
      * isSelfCancellable(): Active has already locked in odometer/timestamp

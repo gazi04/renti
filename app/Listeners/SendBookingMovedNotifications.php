@@ -24,7 +24,7 @@ class SendBookingMovedNotifications implements ShouldQueue
             // fast follow-up cancel/expire could in principle have landed
             // first. Same non-re-locking guard SendBookingConfirmedEmail uses.
             $cancelUrl = $booking->isSelfCancellable()
-                ? $tenant?->signedRouteUrl('public.booking.cancel', $booking->start_date, ['booking' => $booking->id])
+                ? $tenant?->signedRouteUrl('public.booking.cancel', $booking->pickupDeadline(), ['booking' => $booking->id])
                 : null;
 
             Mail::to($booking->customer_email)
