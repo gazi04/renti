@@ -24,7 +24,7 @@ afterEach(fn () => tenancy()->end());
 | Operator signup hardening
 |--------------------------------------------------------------------------
 |
-| The deferred items from docs/redteam-multi-tenancy-isolation.md. None of these
+| The deferred items from the multi-tenancy red team. None of these
 | are cross-tenant reads — the BelongsToTenant scope holds. They are the soft
 | edges around it: unlimited tenant creation, a subdomain claim two requests can
 | both win, and a reserved-name list thin enough to let an operator squat a

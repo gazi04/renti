@@ -335,8 +335,7 @@ it('does not re-check the plan inside the summary job — the command is the onl
     // KNOWN GAP, pinned deliberately: only ai:business-summaries checks the plan
     // before dispatching. A job already queued when a tenant is downgraded still
     // runs — and unlike the maintenance/review jobs, this one spends real AI API
-    // money. Narrow (the dispatch window), but the costliest of the three. See
-    // docs/remaining-bugs-status.md.
+    // money. Narrow (the dispatch window), but the costliest of the three.
     expect(AiBusinessSummary::query()->count())->toBe(1);
 });
 

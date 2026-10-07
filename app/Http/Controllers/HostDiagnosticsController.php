@@ -13,8 +13,7 @@ use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
  * Reports what the application actually sees for Host, X-Forwarded-Host, scheme
  * and port.
  *
- * It exists for one check, documented in docs/deploy-runbook.md: on the first
- * deploy to a new environment, confirm that the load balancer preserves the
+ * It exists for one check: on the first deploy to a new environment, confirm that the load balancer preserves the
  * original Host header. If it does not — if it rewrites Host and passes the real
  * hostname only in X-Forwarded-Host — InitializeTenancyByDomain resolves against
  * the wrong host and every tenant subdomain 404s in production.
@@ -35,7 +34,7 @@ use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
  * from it.
  *
  * Gated in the controller rather than by conditionally registering the route:
- * route:cache is in the deploy command list (docs/ci-cd.md), which would freeze
+ * route:cache is in the deploy command list, which would freeze
  * the flag into the cached route file and make toggling it look like a no-op.
  */
 class HostDiagnosticsController extends Controller

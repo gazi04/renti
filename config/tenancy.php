@@ -15,7 +15,6 @@ use Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager;
 return [
     'tenant_model' => Tenant::class,
     // No custom ID generator: tenants.id is a normal bigint auto-increment PK
-    // (see docs/consolidated-audit-report.md A2 for why this replaced the UUID default).
     'id_generator' => null,
 
     'domain_model' => Domain::class,

@@ -522,7 +522,7 @@ it('recovers from a concurrent unique-constraint conflict on customer phone with
     // the insert first. Pre-creating the row forces that insert to collide with
     // the [tenant_id, phone] unique key, exercising the exact
     // catch-UniqueConstraintViolationException-and-refetch path a genuine
-    // concurrent request would hit (L2 in docs/consolidated-audit-report.md).
+    // concurrent request would hit.
     $existing = Customer::factory()->create(['phone' => '+38344111111']);
 
     $resolved = Customer::query()->createOrFirst(

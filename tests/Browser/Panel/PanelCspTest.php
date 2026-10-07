@@ -15,8 +15,7 @@ afterEach(function (): void {
 |--------------------------------------------------------------------------
 |
 | A header assertion cannot tell a working panel from one whose scripts the
-| browser refused to run — which is why Finding 6 of
-| docs/redteam-app-security-2026-09-11.md went unnoticed from the day the CSP
+| browser refused to run — which is why the blocked-script bug  went unnoticed from the day the CSP
 | was introduced. These drive a real Chromium instead.
 |
 | Nothing here logs in. /dashboard/login is inside the panel's route group, so

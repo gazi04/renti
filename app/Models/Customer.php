@@ -13,8 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 /**
- * A rent-a-car customer, auto-created/linked by phone whenever a booking is made
- * (docs/operator-feature-report.md #2). Tenant-scoped via BelongsToTenant — each
+ * A rent-a-car customer, auto-created/linked by phone whenever a booking is made. Tenant-scoped via BelongsToTenant — each
  * operator only ever sees their own customers.
  *
  * `phone` is the identity key (customers.[tenant_id, phone] is unique) and is

@@ -181,8 +181,7 @@ it('does not re-check the plan inside the maintenance job — the command is the
     // KNOWN GAP, pinned deliberately: the job has no plan check, so a job already
     // queued when a tenant is downgraded still runs the gated behaviour — here it
     // blocks the vehicle and flips it to under-maintenance despite the plan
-    // disabling reminders. Narrow (only the dispatch window), but real — see
-    // docs/remaining-bugs-status.md. If a guard is ever added, this test fails,
+    // disabling reminders. If a guard is ever added, this test fails,
     // which is the point: the change should be conscious, not incidental.
     expect($record->refresh()->blocked_date_id)->not->toBeNull()
         ->and($vehicle->refresh()->status)->toBe(VehicleStatus::UnderMaintenance);

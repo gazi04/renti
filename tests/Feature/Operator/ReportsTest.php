@@ -97,7 +97,6 @@ it('neutralises spreadsheet formulas in the exported CSV', function () {
     // customer_name reaches this export unfiltered from the public booking
     // wizard, so this payload is what an anonymous visitor can plant. Opened in
     // Excel or Sheets, an unguarded cell executes on the operator's machine.
-    // See docs/redteam-app-security-2026-09-03.md.
     Booking::factory()->forVehicle($vehicle)->confirmed()->create([
         'customer_name' => '=cmd|\' /c calc\'!A1',
         'start_date' => '2030-06-05', 'end_date' => '2030-06-10',

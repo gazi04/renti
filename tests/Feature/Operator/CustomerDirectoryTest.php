@@ -89,10 +89,9 @@ it('reuses the same customer for a repeat phone without rewriting their details'
 
     // The repeat booking links to the same record and does NOT rewrite it: the
     // phone is unverified public input, so a visitor who types someone else's
-    // number must not be able to replace that person's stored contact details
-    // (redteam-app-security-2026-09-03, resolveCustomer CRM poisoning). The
-    // second booking's own details are kept on the bookings row instead — see
-    // tests/Feature/Security/CustomerDirectoryIntegrityTest.php.
+    // number must not be able to replace that person's stored contact details.
+    // The second booking's own details are kept on the bookings row
+    // instead — see tests/Feature/Security/CustomerDirectoryIntegrityTest.php.
     $customer = Customer::query()->first();
     expect($customer->name)->toBe($first['customer_name'])
         ->and($customer->email)->toBe($first['customer_email'] ?? null)

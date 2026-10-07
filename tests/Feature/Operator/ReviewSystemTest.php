@@ -244,8 +244,8 @@ it('does not re-check the plan inside the review job — the command is the only
     // KNOWN GAP, pinned deliberately — same shape as the maintenance job: only
     // the reviews:request-pending command checks the plan, so a job already
     // queued when a tenant is downgraded still emails the customer. Narrow (the
-    // dispatch window), but real. See docs/remaining-bugs-status.md. A guard here
-    // would fail this test, which is the point: make the change conscious.
+    // dispatch window), but real. A guard here would fail this test,
+    // which is the point: make the change conscious.
     Mail::assertQueued(BookingReviewRequestMail::class);
     expect($booking->fresh()->review_requested_at)->not->toBeNull();
 });
