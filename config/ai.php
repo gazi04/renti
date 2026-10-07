@@ -204,10 +204,11 @@ return [
     | Cost is computed app-side (providers return token counts only, never a
     | price) by AiCostEstimator using this formula:
     |
-    |   non_cached_input = prompt_tokens − cache_read_input_tokens
+    |   non_cached_input = prompt_tokens − cache_read − cache_write
     |   cost = non_cached_input           / 1e6 * input
     |        + cache_read_input_tokens     / 1e6 * (cached_input ?? input)
-    |        + (completion + reasoning)    / 1e6 * output
+    |        + cache_write_input_tokens    / 1e6 * (cache_write_input ?? input)
+    |        + completion_tokens           / 1e6 * output   (already includes reasoning)
     |
     | Beta runs on GitHub Models (openai/gpt-4.1, free) — no row here, so cost
     | resolves to 0 while usage tokens are still recorded. Add a row (keyed by

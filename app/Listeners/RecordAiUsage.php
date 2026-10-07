@@ -22,6 +22,11 @@ use Throwable;
  *
  * Registered automatically via Laravel's listener discovery (the handle()
  * type-hint) — do NOT also Event::listen() it, or every call is logged twice.
+ *
+ * Since laravel/ai v1 (2026-10) prompt_tokens/completion_tokens hold the
+ * provider's inclusive counts (cached tokens inside input, reasoning inside
+ * output); older rows excluded them. The optional counts are null when the
+ * provider doesn't report them, and the columns are NOT NULL, hence ?? 0.
  */
 class RecordAiUsage
 {
@@ -47,12 +52,12 @@ class RecordAiUsage
                 'feature' => $agent->aiFeature(),
                 'provider' => $response->meta->provider ?? '',
                 'model' => $model,
-                'prompt_tokens' => $usage->promptTokens,
-                'completion_tokens' => $usage->completionTokens,
-                'reasoning_tokens' => $usage->reasoningTokens,
-                'cache_read_input_tokens' => $usage->cacheReadInputTokens,
-                'cache_write_input_tokens' => $usage->cacheWriteInputTokens,
-                'total_tokens' => $usage->promptTokens + $usage->completionTokens,
+                'prompt_tokens' => $usage->inputTokens,
+                'completion_tokens' => $usage->outputTokens,
+                'reasoning_tokens' => $usage->reasoningTokens ?? 0,
+                'cache_read_input_tokens' => $usage->cacheReadInputTokens ?? 0,
+                'cache_write_input_tokens' => $usage->cacheWriteInputTokens ?? 0,
+                'total_tokens' => $usage->totalTokens(),
                 'estimated_cost' => $this->estimator->estimate($model, $usage),
                 'created_at' => now(),
             ]);

@@ -75,7 +75,7 @@ class NotifyWaitlistOnBookingFreed implements ShouldQueue
 
     private function notify(int $tenantId, ?Vehicle $vehicle, ?CarbonInterface $start, ?CarbonInterface $end): void
     {
-        if ($vehicle === null) {
+        if (! $vehicle instanceof Vehicle) {
             return;
         }
 

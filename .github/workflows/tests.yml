@@ -45,6 +45,13 @@ jobs:
 
       - name: CI gate (pint + phpstan + type-coverage + Unit/Feature/Arch)
         run: composer test
+        env:
+          # Caps Pokio's fork pool at 1 (maxProcesses = min(cpu×io, RAM ÷ this)).
+          # On a cold cache, pest-plugin-type-coverage's forked workers all rewrite
+          # vendor/…/.temp/v3.php, and its 100 ms lock wait then falls through to an
+          # unlocked write — the corrupt cache file is a PHP parse error. One worker
+          # means one writer. Nothing else in this step uses Pokio.
+          FORK_MEM_PER_PROC: "1099511627776000"
 
   postgres:
     runs-on: ubuntu-latest
