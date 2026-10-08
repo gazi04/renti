@@ -199,7 +199,7 @@ class BookingService
      */
     public function move(Booking $booking, array $data): Booking
     {
-        return DB::transaction(function () use ($booking, $data) {
+        return DB::transaction(function () use ($booking, $data): Booking {
             // Re-read the pre-image from the database rather than trusting the
             // caller's in-memory $booking — a Filament Action's schema fields
             // sharing names with model columns (vehicle_id/start_date/end_date

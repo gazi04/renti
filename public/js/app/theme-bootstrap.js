@@ -29,8 +29,10 @@
         // localStorage.theme and the `dark` class on <html> are the same pair
         // Filament's own external bundle reads and writes, so this reads a
         // contract the panel is already coupled to rather than inventing one.
-        // window.theme is assigned for parity with the refused block; nothing in
-        // Filament reads it today.
+        // window.theme is assigned for parity with the refused block. Nothing in
+        // Filament reads it, but tests/Browser/Panel/PanelCspTest.php does: it is
+        // the only observable that separates "this file ran" from "Alpine got
+        // there on its own a moment later". Keep it.
         const theme = (window.theme =
             localStorage.getItem('theme') ?? defaultThemeMode)
 

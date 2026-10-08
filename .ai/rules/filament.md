@@ -12,4 +12,4 @@ The refusal is cheap and deliberate: those blocks are pre-paint FOUC guards only
 
 Filament's six `@script`-wrapped blocks and x-data/x-load are NOT inline — Livewire runs them via `new Function`, i.e. 'unsafe-eval'. Don't count them as blocked.
 
-Assert CSP with `cspDirective($csp, 'script-src')` from tests/Pest.php, never `toContain(...)` on the whole policy: substring assertions still pass once 'unsafe-inline' is appended to a directive, which is how this repo went without a working guard for as long as the CSP existed. See docs/redteam-app-security-2026-09-11.md Finding 6.
+Assert CSP with `cspDirective($csp, 'script-src')` from tests/Pest.php, never `toContain(...)` on the whole policy: substring assertions still pass once 'unsafe-inline' is appended to a directive, which is how this repo went without a working guard for as long as the CSP existed. See docs/summary.md, "Parent-scoped session cookie + load-bearing CSP".

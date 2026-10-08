@@ -49,7 +49,7 @@ return [
     | already have. What it buys is that a load balancer which rewrites Host stops
     | being an outage that needs a code deploy to fix.
     |
-    | Leave it false. Turn it on only if the deploy probe in docs/deploy-runbook.md
+    | Leave it false.
     | shows the load balancer rewriting Host, and turn it back off once the load
     | balancer is fixed.
     |
@@ -63,8 +63,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Exposes GET /_diagnostics/host, which reports what the app actually sees for
-    | Host, X-Forwarded-Host, scheme and port. It exists for the first-deploy check
-    | in docs/deploy-runbook.md, which cannot be run any other way: an Artisan
+    | Host, X-Forwarded-Host, scheme and port. It exists for the first-deploy, which cannot be run any other way: an Artisan
     | command has no request, so it has no Host header to report on.
     |
     | The two "does this resolve to a tenant" answers are booleans, never a tenant

@@ -82,12 +82,62 @@ it('leaves a pending booking inside the window alone', function () {
     expect($booking->refresh()->status)->toBe(BookingStatus::Pending);
 });
 
-it('cancels a fresh pending booking whose pickup date has already passed', function () {
+it('cancels a fresh pending booking whose pickup day has already ended', function () {
     [$tenant] = expiryTenant('exppast');
     $booking = pendingBooking(Vehicle::factory()->create(), hoursAgo: 1, attributes: [
-        'start_date' => now()->subHour(),
+        'start_date' => now()->subDay(),
         'end_date' => now()->addDays(2),
     ]);
+
+    (new ExpireStalePendingBookingsJob($tenant))->handle(app(BookingService::class));
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Cancelled);
+});
+
+/**
+ * A pending booking made the way the storefront makes it: date-only, so
+ * start_date lands at 00:00 of the pickup day.
+ */
+function storefrontBooking(Vehicle $vehicle, string $startDate, string $endDate): Booking
+{
+    return app(BookingService::class)->create([
+        'vehicle_id' => $vehicle->id,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'customer_name' => 'Ana Krasniqi',
+        'customer_phone' => '+38344111222',
+    ]);
+}
+
+it('keeps a same-day storefront booking pending for the rest of its pickup day', function () {
+    // The pickup day is the deadline, not its first second: a booking made at
+    // 10:00 for today used to be cancelled by the next hourly run.
+    [$tenant] = expiryTenant('expsameday');
+    $this->travelTo('2026-10-06 10:00:00');
+    $booking = storefrontBooking(Vehicle::factory()->create(), '2026-10-06', '2026-10-08');
+    $this->travelTo('2026-10-06 23:00:00');
+
+    (new ExpireStalePendingBookingsJob($tenant))->handle(app(BookingService::class));
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Pending);
+});
+
+it('keeps an evening booking for tomorrow pending overnight, until the operator can answer', function () {
+    [$tenant] = expiryTenant('expovernight');
+    $this->travelTo('2026-10-06 20:00:00');
+    $booking = storefrontBooking(Vehicle::factory()->create(), '2026-10-07', '2026-10-09');
+    $this->travelTo('2026-10-07 08:00:00');
+
+    (new ExpireStalePendingBookingsJob($tenant))->handle(app(BookingService::class));
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Pending);
+});
+
+it('cancels an unanswered storefront booking once its pickup day is over', function () {
+    [$tenant] = expiryTenant('expdayover');
+    $this->travelTo('2026-10-06 09:00:00');
+    $booking = storefrontBooking(Vehicle::factory()->create(), '2026-10-06', '2026-10-08');
+    $this->travelTo('2026-10-07 00:30:00');
 
     (new ExpireStalePendingBookingsJob($tenant))->handle(app(BookingService::class));
 

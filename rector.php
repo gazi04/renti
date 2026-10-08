@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Rector\Caching\ValueObject\Storage\FileCacheStorage;
 use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsParentRector;
 use Rector\Config\RectorConfig;
+use Rector\DeadCode\Rector\ClassMethod\RemoveReturnTagIncompatibleWithNativeTypeRector;
 use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
 use Rector\Php85\Rector\Property\AddOverrideAttributeToOverriddenPropertiesRector;
 use RectorLaravel\Rector\If_\ThrowIfRector;
@@ -58,6 +59,12 @@ return RectorConfig::configure()
         // single-line guards elsewhere in the file keep the helper.
         ThrowIfRector::class => [
             __DIR__.'/app/Services/BookingService.php',
+        ],
+        // Rector reads `@return view-string` as contradicting the native `string`
+        // return and deletes it, but Larastan needs it: routes/web.php passes
+        // view() into Route::view(), whose $view parameter is a view-string.
+        RemoveReturnTagIncompatibleWithNativeTypeRector::class => [
+            __DIR__.'/app/Enums/MarketingPage.php',
         ],
     ])
     ->withPreparedSets(

@@ -14,4 +14,4 @@ Keep the length bounds in FaqGrounding, never as `->min()`/`->max()` on the JSON
 
 Grounding failure returns the localized contact line, never AiRequestFailedException (the widget renders that as "something went wrong"). Log metadata only — tenant id and lengths, never the question, answer or quote.
 
-Untested assumption: that the model returns verbatim spans. Tests fake the model, so they only prove the parser; if it starts paraphrasing, every answer silently falls back. The "Concierge answer failed grounding" warning is the production signal. See docs/redteam-app-security-2026-09-11.md Finding 5.
+Untested assumption: that the model returns verbatim spans. Tests fake the model, so they only prove the parser; if it starts paraphrasing, every answer silently falls back. The "Concierge answer failed grounding" warning is the production signal. See docs/summary.md, "Concierge grounding".

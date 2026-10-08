@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Ai;
 
 use Illuminate\Support\Facades\Log;
-use Laravel\Ai\Responses\Data\Usage;
+use Laravel\Ai\Responses\Data\TextUsage;
 
 /**
  * Computes the estimated EUR cost of one AI call from its token usage and the
@@ -23,9 +23,9 @@ class AiCostEstimator
      */
     private static array $warnedModels = [];
 
-    public function estimate(string $model, Usage $usage): float
+    public function estimate(string $model, TextUsage $usage): float
     {
-        /** @var array{input?: float|int, cached_input?: float|int|null, output?: float|int}|null $prices */
+        /** @var array{input?: float|int, cached_input?: float|int|null, cache_write_input?: float|int|null, output?: float|int}|null $prices */
         $prices = config('ai.pricing.'.$model);
 
         if ($prices === null) {
@@ -48,11 +48,14 @@ class AiCostEstimator
         $input = (float) ($prices['input'] ?? 0);
         $output = (float) ($prices['output'] ?? 0);
         $cachedInput = isset($prices['cached_input']) ? (float) $prices['cached_input'] : $input;
+        $cacheWriteInput = isset($prices['cache_write_input']) ? (float) $prices['cache_write_input'] : $input;
 
-        $nonCachedInput = max(0, $usage->promptTokens - $usage->cacheReadInputTokens);
-
-        return $nonCachedInput / 1_000_000 * $input
-            + $usage->cacheReadInputTokens / 1_000_000 * $cachedInput
-            + ($usage->completionTokens + $usage->reasoningTokens) / 1_000_000 * $output;
+        // laravel/ai v1 counts are inclusive: inputTokens already contains the
+        // cache-read/-write tokens and outputTokens already contains reasoning,
+        // so reasoning must not be added on top of the output count.
+        return max(0, $usage->uncachedInputTokens()) / 1_000_000 * $input
+            + ($usage->cacheReadInputTokens ?? 0) / 1_000_000 * $cachedInput
+            + ($usage->cacheWriteInputTokens ?? 0) / 1_000_000 * $cacheWriteInput
+            + $usage->outputTokens / 1_000_000 * $output;
     }
 }

@@ -11,7 +11,7 @@ use App\Services\Ai\AiCostEstimator;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Responses\Data\Meta;
-use Laravel\Ai\Responses\Data\Usage;
+use Laravel\Ai\Responses\Data\TextUsage;
 use Laravel\Ai\Responses\StructuredTextResponse;
 use Livewire\Livewire;
 
@@ -27,14 +27,14 @@ afterEach(function () {
  *
  * @param  array<string, mixed>  $structured
  */
-function fakeAiResponse(array $structured, Usage $usage, string $provider = 'openai', string $model = 'gpt-5-mini'): StructuredTextResponse
+function fakeAiResponse(array $structured, TextUsage $usage, string $provider = 'openai', string $model = 'gpt-5-mini'): StructuredTextResponse
 {
     return new StructuredTextResponse($structured, (string) json_encode($structured), $usage, new Meta($provider, $model));
 }
 
 it('records one usage row with mapped tokens and central attribution', function () {
-    // Usage(prompt, completion, cacheWrite, cacheRead, reasoning)
-    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new Usage(1000, 500, 0, 200, 0))]);
+    // TextUsage(input, output, cacheRead, cacheWrite, reasoning)
+    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new TextUsage(1000, 500, 200, 0, 0))]);
 
     (new VehicleListingAgent)->prompt('facts');
 
@@ -55,12 +55,42 @@ it('records one usage row with mapped tokens and central attribution', function 
 it('computes estimated cost from the config price table', function () {
     config(['ai.pricing.gpt-5-mini' => ['input' => 10, 'cached_input' => 5, 'output' => 30]]);
 
-    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new Usage(1000, 500, 0, 200, 0))]);
+    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new TextUsage(1000, 500, 200, 0, 0))]);
 
     (new VehicleListingAgent)->prompt('facts');
 
     // non_cached = 800 → 800/1e6*10 + 200/1e6*5 + 500/1e6*30 = 0.008 + 0.001 + 0.015
     expect((float) AiUsageLog::query()->sole()->estimated_cost)->toBe(0.024);
+});
+
+it('bills reasoning once, as part of the output count', function () {
+    config(['ai.pricing.gpt-5-mini' => ['input' => 10, 'output' => 30]]);
+
+    // laravel/ai v1: the 100 reasoning tokens are already inside the 500 output.
+    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new TextUsage(1000, 500, null, null, 100))]);
+
+    (new VehicleListingAgent)->prompt('facts');
+
+    $row = AiUsageLog::query()->sole();
+
+    // 1000/1e6*10 + 500/1e6*30 = 0.01 + 0.015
+    expect((float) $row->estimated_cost)->toBe(0.025)
+        ->and($row->reasoning_tokens)->toBe(100)
+        ->and($row->total_tokens)->toBe(1500);
+});
+
+it('records zeros when the provider omits the optional token counts', function () {
+    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new TextUsage(300, 120))]);
+
+    (new VehicleListingAgent)->prompt('facts');
+
+    $row = AiUsageLog::query()->sole();
+
+    expect($row->prompt_tokens)->toBe(300)
+        ->and($row->completion_tokens)->toBe(120)
+        ->and($row->cache_read_input_tokens)->toBe(0)
+        ->and($row->cache_write_input_tokens)->toBe(0)
+        ->and($row->reasoning_tokens)->toBe(0);
 });
 
 it('estimates zero when no price row exists (free-provider beta reality)', function () {
@@ -79,7 +109,7 @@ it('warns once per model when a call is priced at zero for lack of a price row',
     Log::spy();
 
     $estimator = new AiCostEstimator;
-    $usage = new Usage(1000, 500, 0, 0, 0);
+    $usage = new TextUsage(1000, 500, 0, 0, 0);
 
     expect($estimator->estimate('some-paid-model', $usage))->toBe(0.0)
         ->and($estimator->estimate('some-paid-model', $usage))->toBe(0.0);
@@ -94,7 +124,7 @@ it('stays silent when the model has a price row', function () {
     config(['ai.pricing.priced-model' => ['input' => 10, 'output' => 30]]);
     Log::spy();
 
-    (new AiCostEstimator)->estimate('priced-model', new Usage(1000, 500, 0, 0, 0));
+    (new AiCostEstimator)->estimate('priced-model', new TextUsage(1000, 500, 0, 0, 0));
 
     Log::shouldNotHaveReceived('warning');
 });
@@ -103,7 +133,7 @@ it('attributes the row to the active tenant', function () {
     $tenant = Tenant::factory()->create();
     tenancy()->initialize($tenant);
 
-    BusinessSummaryAgent::fake([fakeAiResponse(['en' => 'x', 'sq' => 'y'], new Usage(100, 50, 0, 0, 0))]);
+    BusinessSummaryAgent::fake([fakeAiResponse(['en' => 'x', 'sq' => 'y'], new TextUsage(100, 50, 0, 0, 0))]);
 
     (new BusinessSummaryAgent)->prompt('metrics');
 
@@ -115,7 +145,7 @@ it('never breaks the AI call when recording fails', function () {
         ->shouldReceive('estimate')
         ->andThrow(new RuntimeException('boom'));
 
-    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new Usage(1000, 500, 0, 0, 0))]);
+    VehicleListingAgent::fake([fakeAiResponse(['description' => 'A ride.'], new TextUsage(1000, 500, 0, 0, 0))]);
 
     $response = (new VehicleListingAgent)->prompt('facts');
 

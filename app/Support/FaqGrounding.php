@@ -12,7 +12,7 @@ namespace App\Support;
  * anonymous third party with no operator review, and until this existed the whole
  * grounding gate was a `confident` boolean the MODEL filled in — so a jailbreak
  * that set it true shipped a fabricated policy inside the operator's branded
- * widget. See docs/redteam-app-security-2026-09-11.md, Finding 5.
+ * widget.
  *
  * # Why a quote rather than word overlap
  *

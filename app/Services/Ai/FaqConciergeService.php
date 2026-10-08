@@ -26,8 +26,7 @@ use Throwable;
  * 2. `source_quote` — verified against the FAQ by App\Support\FaqGrounding.
  *    Gate 1 alone was the whole check until 2026-09-12, and a field the model
  *    fills in is not a security control: a jailbreak that set it true published
- *    a fabricated policy in the operator's branding. See
- *    docs/redteam-app-security-2026-09-11.md, Finding 5.
+ *    a fabricated policy in the operator's branding.
  *
  * Both failures land on the same contact line rather than an exception. A
  * question the FAQ cannot answer is not an error, and the widget renders

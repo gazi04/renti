@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 | Proves lockForUpdate() actually locks on the production driver
 |--------------------------------------------------------------------------
 |
-| architecture-review.md H3: lockForUpdate() (used by
+| architecture-review H3: lockForUpdate() (used by
 | BookingService::lockAndValidate() to prevent double-booking) is a no-op
 | on SQLite, and the whole suite runs on SQLite — so this invariant has
 | never been exercised on the driver that actually enforces it. This test

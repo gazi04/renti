@@ -62,7 +62,7 @@ Route::domain(config('tenancy.central_domain'))
 // lets the runbook's "hit a tenant subdomain" instruction work.
 //
 // Off by default and gated inside the controller (not by conditional
-// registration, which route:cache would freeze). See docs/deploy-runbook.md.
+// registration, which route:cache would freeze).
 Route::get('/_diagnostics/host', HostDiagnosticsController::class)
     ->name('diagnostics.host')
     ->middleware('throttle:host-diagnostics');

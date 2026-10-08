@@ -556,7 +556,9 @@ test('received-email cancel link is signed until the rental starts, not a fixed 
 
     parse_str((string) parse_url($mail->cancelUrl, PHP_URL_QUERY), $query);
 
-    expect((int) $query['expires'])->toBe($booking->start_date->getTimestamp());
+    // The whole pickup day, not its first second: start_date is date-only
+    // (00:00), so a same-day booking's link would otherwise be dead on arrival.
+    expect((int) $query['expires'])->toBe($booking->start_date->endOfDay()->getTimestamp());
 });
 
 test('confirmed-email now carries a signed cancel link, not just the agreement download', function () {

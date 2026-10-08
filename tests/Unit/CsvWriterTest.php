@@ -11,7 +11,6 @@ covers(CsvWriter::class);
 |
 | bookings.customer_name reaches the Reports export straight from the public
 | booking wizard, and a spreadsheet runs any cell starting with = + - or @.
-| See docs/redteam-app-security-2026-09-03.md (HIGH finding).
 |
 */
 

@@ -240,7 +240,7 @@ class ForwardedHostTenancyGuard
             'recovery_enabled' => $recovering,
             'hint' => $recovering
                 ? 'Recovery is on and this request resolved from the validated forwarded host. Fix the load balancer to preserve the original Host header, then set FORWARDED_HOST_RECOVERY=false.'
-                : 'If this is firing for every tenant subdomain, tenant resolution is broken in production. Set FORWARDED_HOST_RECOVERY=true (see config/security.php and docs/deploy-runbook.md) to resolve from the validated X-Forwarded-Host without a code deploy.',
+                : 'If this is firing for every tenant subdomain, tenant resolution is broken in production. Set FORWARDED_HOST_RECOVERY=true (see config/security.php) to resolve from the validated X-Forwarded-Host without a code deploy.',
         ]);
     }
 }

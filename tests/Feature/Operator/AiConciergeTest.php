@@ -10,7 +10,7 @@ use App\Services\Ai\FaqConciergeService;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Ai\Responses\Data\Meta;
-use Laravel\Ai\Responses\Data\Usage;
+use Laravel\Ai\Responses\Data\TextUsage;
 use Laravel\Ai\Responses\StructuredTextResponse;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
@@ -62,12 +62,12 @@ function conciergeTenant(string $domain, array $planFeatures = [], ?string $plan
  *
  * @param  array{answer: string, confident: bool}  $structured
  */
-function fakeConciergeResponse(array $structured, ?Usage $usage = null): StructuredTextResponse
+function fakeConciergeResponse(array $structured, ?TextUsage $usage = null): StructuredTextResponse
 {
     return new StructuredTextResponse(
         $structured,
         (string) json_encode($structured),
-        $usage ?? new Usage(120, 40, 0, 0, 0),
+        $usage ?? new TextUsage(120, 40, 0, 0, 0),
         new Meta('openai', 'gpt-4.1'),
     );
 }

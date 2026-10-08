@@ -14,6 +14,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
 
@@ -53,7 +54,7 @@ class WaitlistService
 
         throw_if($start->lt(today()), InvalidArgumentException::class, 'Cannot join a waitlist for dates in the past.');
 
-        return WaitlistEntry::query()->create([
+        return $this->insertEntry([
             'vehicle_id' => $vehicle->id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -75,7 +76,7 @@ class WaitlistService
      */
     public function joinStockAlert(Vehicle $vehicle, array $data): WaitlistEntry
     {
-        return WaitlistEntry::query()->create([
+        return $this->insertEntry([
             'vehicle_id' => $vehicle->id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -84,6 +85,20 @@ class WaitlistService
             'end_date' => null,
             'locale' => $data['locale'] ?? null,
         ]);
+    }
+
+    /**
+     * Insert one entry in its own transaction. A repeat join is expected to hit
+     * a unique index, and callers catch that to show the same thank-you; inside
+     * an outer transaction this becomes a savepoint, so on Postgres the failed
+     * INSERT rolls back alone instead of aborting the caller's transaction
+     * (every later query would otherwise fail with SQLSTATE 25P02).
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function insertEntry(array $attributes): WaitlistEntry
+    {
+        return DB::transaction(fn (): WaitlistEntry => WaitlistEntry::query()->create($attributes));
     }
 
     /**

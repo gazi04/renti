@@ -6,6 +6,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | --- | --- |
 | app/Services/Ai/** | .ai/rules/ai.md |
 | app/** | .ai/rules/app.md |
+| app/Events/** | .ai/rules/events.md |
 | app/Providers/Filament/** | .ai/rules/filament.md |
 | app/Http/Middleware/EnsureTenantIsActive.php, app/Http/Middleware/** | .ai/rules/middleware.md |
 | app/Models/*.php, app/Models/Tenant.php | .ai/rules/models.md |

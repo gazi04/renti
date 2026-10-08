@@ -24,7 +24,7 @@ afterEach(fn () => tenancy()->end());
 | Cancel, agreement and review links are emailed to customers with no account
 | behind them, and they do not expire on use. A link forwarded into a support
 | ticket, or sitting in a mail archive, stays live for its whole window — cancel
-| until start_date, agreement 7 days, review 30 days.
+| until the pickup day ends, agreement 7 days, review 30 days.
 |
 | The 2026-09-03 review accepted that deliberately, and the reasoning holds:
 | shortening the window breaks the long-lead-time booking that is exactly when a
@@ -79,7 +79,7 @@ it('makes a replayed cancel link inert once the booking is cancelled', function 
     Event::assertDispatchedTimes(BookingCancelled::class, 1);
 })->group('security');
 
-it('honours the cancel link only until the booking start date', function () {
+it('honours the cancel link only until the booking pickup day ends', function () {
     $tenant = Tenant::factory()->withDomain('cancelwindow')->create();
     $vehicle = publicVehicleFor($tenant, 'Window Roadster');
 
@@ -90,10 +90,11 @@ it('honours the cancel link only until the booking start date', function () {
     ]);
     tenancy()->end();
 
-    // BookingReceivedMail signs the cancel link with start_date as the expiry —
-    // not a fixed duration. Every existing cancel test hard-codes addDay()/
-    // subSecond(), so the actual production window was never exercised.
-    $url = signedTenantUrl('cancelwindow', 'public.booking.cancel', $booking->start_date, ['booking' => $booking->id]);
+    // BookingReceivedMail signs the cancel link with Booking::pickupDeadline()
+    // (end of the pickup day) as the expiry — not a fixed duration. Every
+    // existing cancel test hard-codes addDay()/subSecond(), so the actual
+    // production window was never exercised.
+    $url = signedTenantUrl('cancelwindow', 'public.booking.cancel', $booking->pickupDeadline(), ['booking' => $booking->id]);
 
     test()->get($url)->assertOk();
 

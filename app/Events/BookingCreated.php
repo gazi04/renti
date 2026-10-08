@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Events;
 
 use App\Models\Booking;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 
-class BookingCreated
+class BookingCreated implements ShouldDispatchAfterCommit
 {
     use Dispatchable;
 

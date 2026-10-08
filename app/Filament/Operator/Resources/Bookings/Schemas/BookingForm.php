@@ -37,7 +37,7 @@ class BookingForm
                             ->columnSpanFull()
                             ->visible(fn (?Booking $record): bool => $record?->moved_at !== null)
                             ->content(function (?Booking $record): string {
-                                if ($record === null) {
+                                if (! $record instanceof Booking) {
                                     return '';
                                 }
 

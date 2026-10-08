@@ -16,7 +16,7 @@ return new class extends Migration
         // the most recent prior state. previous_vehicle_id has no FK constraint
         // (unlike vehicle_id) so the snapshot survives the original vehicle being
         // deleted later.
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->foreignId('previous_vehicle_id')->nullable()->after('vehicle_id');
             $table->dateTime('previous_start_date')->nullable()->after('previous_vehicle_id');
             $table->dateTime('previous_end_date')->nullable()->after('previous_start_date');
@@ -29,7 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->dropColumn(['previous_vehicle_id', 'previous_start_date', 'previous_end_date', 'moved_at']);
         });
     }

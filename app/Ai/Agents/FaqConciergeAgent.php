@@ -26,8 +26,7 @@ use Laravel\Ai\Promptable;
  * MODEL fills in — so a jailbreak that set it true shipped a fabricated policy
  * to a visitor inside the operator's branding. `source_quote` is what makes the
  * claim checkable: the service verifies the quote really occurs in the FAQ via
- * App\Support\FaqGrounding before trusting anything. See
- * docs/redteam-app-security-2026-09-11.md, Finding 5.
+ * App\Support\FaqGrounding before trusting anything.
  *
  * The first agent in the app to implement Conversational: the SDK splices
  * messages() into the prompt for multi-turn chat (GeneratesText), without the

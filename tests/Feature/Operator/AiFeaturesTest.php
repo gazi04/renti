@@ -237,15 +237,17 @@ it('hides the summary widget from staff even with the plan feature', function ()
 
 it('blocks staff from calling generate directly, not just hiding the widget', function () {
     // Renamed from "bypassing canView": canView() is not bypassable. Filament's
-    // widget CanAuthorizeAccess trait re-checks it on every hydration, so the
-    // wire call 403s before generate() runs. What this pins is the outcome — a
-    // staff member cannot generate a summary by calling the method directly.
+    // widget CanAuthorizeAccess trait checks it in boot (since 5.10), which runs
+    // before mount() and before every hydration, so the component aborts (403,
+    // rendered as 404 by the app) before there is anything to call generate()
+    // on. What this pins is the outcome — a staff member cannot generate a
+    // summary over the wire.
     aiOperator('staffgenerate', [PlanFeature::AiBusinessSummary->value => true], role: 'staff');
 
     BusinessSummaryAgent::fake([['en' => 'Should never be reached.', 'sq' => 'S’duhet arritur kurrë.']]);
 
     Livewire::test(BusinessSummaryWidget::class)
-        ->call('generate');
+        ->assertNotFound();
 
     expect(AiBusinessSummary::query()->count())->toBe(0);
 });
@@ -257,18 +259,17 @@ it('blocks an owner without the plan feature from calling generate directly', fu
     // `! isOwner() || ! allowsFeature(...)`, and staff short-circuits on the
     // left operand, so the plan half never evaluates there.
     //
-    // Two gates defend this, verified by mutation: Filament\Widgets\Widget uses
-    // CanAuthorizeAccess, whose hydrateCanAuthorizeAccess() aborts 403 unless
-    // canView() — so the wire call never even reaches generate(). The in-code
-    // re-check inside generate() is a redundant backstop for a non-Livewire
-    // caller. Breaking either alone leaves this test green; breaking both makes
-    // it fail, which is the guarantee worth having.
+    // Filament\Widgets\Widget uses CanAuthorizeAccess, whose
+    // bootCanAuthorizeAccess() (Filament 5.10+) aborts (403 → 404) unless canView() on
+    // mount and on every update — so the wire call never reaches generate().
+    // The in-code re-check inside generate() is a redundant backstop for a
+    // non-Livewire caller.
     aiOperator('ownergenerate', [PlanFeature::AiBusinessSummary->value => false]);
 
     BusinessSummaryAgent::fake([['en' => 'Should never be reached.', 'sq' => 'S’duhet arritur kurrë.']]);
 
     Livewire::test(BusinessSummaryWidget::class)
-        ->call('generate');
+        ->assertNotFound();
 
     expect(AiBusinessSummary::query()->count())->toBe(0);
 });
@@ -335,8 +336,7 @@ it('does not re-check the plan inside the summary job — the command is the onl
     // KNOWN GAP, pinned deliberately: only ai:business-summaries checks the plan
     // before dispatching. A job already queued when a tenant is downgraded still
     // runs — and unlike the maintenance/review jobs, this one spends real AI API
-    // money. Narrow (the dispatch window), but the costliest of the three. See
-    // docs/remaining-bugs-status.md.
+    // money. Narrow (the dispatch window), but the costliest of the three.
     expect(AiBusinessSummary::query()->count())->toBe(1);
 });
 

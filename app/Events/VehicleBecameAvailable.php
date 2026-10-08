@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Events;
 
 use App\Models\Vehicle;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -14,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
  * Unlike the Booking events, this is dispatched from the model rather than a
  * service — see Vehicle::booted() for why.
  */
-class VehicleBecameAvailable
+class VehicleBecameAvailable implements ShouldDispatchAfterCommit
 {
     use Dispatchable;
     use SerializesModels;
